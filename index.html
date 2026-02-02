@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notation Athlétisme - EPS</title>
+    <meta name="description" content="Application de notation pour les épreuves d'athlétisme: 800m, 120m haies, Pentabond">
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192x192.png">
+    <link rel="apple-touch-icon" href="./icon-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --primary-dark: #e55a2b;
+            --primary-glow: rgba(255, 107, 53, 0.3);
+            --secondary: #1a1a2e;
+            --secondary-light: #252542;
+            --accent: #00d4aa;
+            --accent-glow: rgba(0, 212, 170, 0.3);
+            --background: #0f0f1a;
+            --surface: #1a1a2e;
+            --surface-light: #252542;
+            --text: #ffffff;
+            --text-muted: #a0a0b0;
+            --border: #3a3a5a;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header compact */
+        .header {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--surface-light) 100%);
+            padding: 0.75rem 1.5rem;
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Stats dans le header */
+        .header-stats {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .stat-item .value {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .stat-item .label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+        }
+
+        /* Tabs compacts */
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            background: var(--surface);
+            padding: 0.25rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .tab:hover {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 10px var(--primary-glow);
+        }
+
+        .tab-icon {
+            font-size: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-hint kbd {
+            background: var(--background);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Table optimisée pour la saisie */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.5rem 0.4rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface);
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-muted);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 0.6rem 0.4rem;
+        }
+
+        td:nth-child(1), td:nth-child(2), th:nth-child(1), th:nth-child(2) {
+            text-align: left;
+            padding-left: 0.75rem;
+        }
+
+        tr:hover {
+            background: rgba(255, 107, 53, 0.03);
+        }
+
+        tr:focus-within {
+            background: rgba(255, 107, 53, 0.05);
+        }
+
+        /* Inputs de saisie optimisés */
+        .table-input {
+            width: 100%;
+            min-width: 75px;
+            padding: 0.6rem 0.5rem;
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .table-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--surface-light);
+        }
+
+        .table-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+            font-size: 0.8rem;
+        }
+
+        .table-select {
+            width: 100%;
+            min-width: 100px;
+            padding: 0.6rem 0.3rem;
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .table-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .calculated {
+            background: rgba(255, 107, 53, 0.08);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .note-cell {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.15) 0%, rgba(0, 212, 170, 0.05) 100%);
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .disp-row {
+            opacity: 0.5;
+        }
+
+        .disp-row td {
+            font-style: italic;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .student-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 6px;
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            opacity: 0.5;
+        }
+
+        tr:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Average Section compact */
+        .average-section {
+            background: var(--surface-light);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .average-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .average-options {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            background: var(--background);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            font-size: 0.8rem;
+        }
+
+        .radio-option:hover {
+            border-color: var(--primary);
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: var(--primary);
+            width: 14px;
+            height: 14px;
+        }
+
+        .radio-option input[type="radio"]:checked + span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: var(--transition);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:hover {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            background: var(--surface-light);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Dropdown menu pour import */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            min-width: 180px;
+            z-index: 200;
+            display: none;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .dropdown-item:hover {
+            background: var(--surface-light);
+        }
+
+        .dropdown-item input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            .header-stats {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--border);
+                margin-top: 0.5rem;
+            }
+
+            .container {
+                padding: 0.75rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                min-width: calc(50% - 0.25rem);
+            }
+
+            th, td {
+                padding: 0.4rem 0.25rem;
+                font-size: 0.7rem;
+            }
+
+            .table-input, .table-select {
+                padding: 0.5rem 0.3rem;
+                font-size: 0.85rem;
+                min-width: 60px;
+            }
+
+            .average-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--success);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            animation: toastSlideIn 0.3s ease-out;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .toast.active {
+            display: block;
+        }
+
+        .toast.error {
+            border-left-color: var(--error);
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Update notification */
+        .update-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            z-index: 3000;
+            cursor: pointer;
+        }
+
+        .update-banner.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header compact -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏃</div>
+                <span class="logo-text">Notation Athlétisme</span>
+            </div>
+            
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="value" id="totalStudents">0</span>
+                    <span class="label">élèves</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="totalBoys">0</span>
+                    <span class="label">G</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="totalGirls">0</span>
+                    <span class="label">F</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="avgNote">-</span>
+                    <span class="label">moy.</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="dropdown">
+                    <button class="btn btn-secondary" onclick="toggleDropdown()" type="button">
+                        📁 Importer ▾
+                    </button>
+                    <div class="dropdown-menu" id="importDropdown">
+                        <label class="dropdown-item">
+                            <input type="file" accept=".csv" onchange="importCSV(event)">
+                            📄 Fichier CSV
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="file" accept=".xlsx,.xls" onchange="importExcel(event)">
+                            📊 Fichier Excel
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="file" accept=".pdf" onchange="importPDF(event)">
+                            📑 Fichier PDF
+                        </label>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="openModal('addStudentModal')" type="button">
+                    ➕ Ajouter
+                </button>
+                <button class="btn btn-success" onclick="exportResults()" type="button">
+                    📥 Export
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tabs compacts -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('800m', event)" type="button">
+                <span class="tab-icon">🏃</span> 800m
+            </button>
+            <button class="tab" onclick="switchTab('haies', event)" type="button">
+                <span class="tab-icon">🏃‍♂️</span> Haies
+            </button>
+            <button class="tab" onclick="switchTab('pentabond', event)" type="button">
+                <span class="tab-icon">🦘</span> Pentabond
+            </button>
+            <button class="tab" onclick="switchTab('resultats', event)" type="button">
+                <span class="tab-icon">📊</span> Résultats
+            </button>
+        </div>
+
+        <!-- 800m Tab -->
+        <div class="tab-content active" id="tab-800m">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏃 800m - Performance et Régularité</h2>
+                    <div class="card-hint">
+                        Format: <kbd>2:37:2</kbd> ou <kbd>disp</kbd> | <kbd>Tab</kbd> <kbd>Entrée</kbd> pour naviguer
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Grp</th>
+                                <th>Sexe</th>
+                                <th>Projet</th>
+                                <th>T. 400m</th>
+                                <th>T. 800m</th>
+                                <th>2e 400m</th>
+                                <th>Éc. tours</th>
+                                <th>Pts</th>
+                                <th>Éc. projet</th>
+                                <th>Pts</th>
+                                <th>Perf</th>
+                                <th>NOTE</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-800m"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-800m">
+                    <div class="empty-state-icon">🏃</div>
+                    <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 120m Haies Tab -->
+        <div class="tab-content" id="tab-haies">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏃‍♂️ 120m Haies</h2>
+                    <div class="card-hint">
+                        Format: <kbd>18.5</kbd> ou <kbd>disp</kbd>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Grp</th>
+                                <th>Sexe</th>
+                                <th>Projet</th>
+                                <th>Temps</th>
+                                <th>Départ</th>
+                                <th>Pts dép.</th>
+                                <th>Écart</th>
+                                <th>Pts éc.</th>
+                                <th>Perf</th>
+                                <th>NOTE</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-haies"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-haies">
+                    <div class="empty-state-icon">🏃‍♂️</div>
+                    <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pentabond Tab -->
+        <div class="tab-content" id="tab-pentabond">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🦘 Pentabond</h2>
+                    <div class="card-hint">
+                        Format: <kbd>12.75</kbd> ou <kbd>disp</kbd>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Grp</th>
+                                <th>Sexe</th>
+                                <th>Projet</th>
+                                <th>Perf</th>
+                                <th>Écart</th>
+                                <th>Pts éc.</th>
+                                <th>Élan</th>
+                                <th>1er saut</th>
+                                <th>Équilibre</th>
+                                <th>Perf</th>
+                                <th>NOTE</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-pentabond"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-pentabond">
+                    <div class="empty-state-icon">🦘</div>
+                    <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats Tab -->
+        <div class="tab-content" id="tab-resultats">
+            <div class="average-section">
+                <div class="average-title">⚙️ Calcul moyenne :</div>
+                <div class="average-options">
+                    <label class="radio-option">
+                        <input type="radio" name="avgMode" value="3" checked onchange="updateAllResults()">
+                        <span>3 épreuves</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="avgMode" value="2" onchange="updateAllResults()">
+                        <span>Pentabond + meilleure course</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Résultats finaux</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Groupe</th>
+                                <th>Sexe</th>
+                                <th>800m</th>
+                                <th>Haies</th>
+                                <th>Pentabond</th>
+                                <th>Moyenne</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-resultats"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-resultats">
+                    <div class="empty-state-icon">📊</div>
+                    <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal" id="addStudentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ Nouvel élève</h3>
+                <button class="modal-close" onclick="closeModal('addStudentModal')" type="button">&times;</button>
+            </div>
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-input" id="newNom" required placeholder="DUPONT">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prénom *</label>
+                    <input type="text" class="form-input" id="newPrenom" required placeholder="Jean">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Groupe *</label>
+                    <input type="text" class="form-input" id="newGroupe" required placeholder="TS2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sexe *</label>
+                    <select class="form-select" id="newSexe" required>
+                        <option value="M">Masculin (M)</option>
+                        <option value="F">Féminin (F)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Ajouter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Update Banner -->
+    <div class="update-banner" id="updateBanner" onclick="location.reload()">
+        🔄 Nouvelle version disponible ! Cliquez pour mettre à jour.
+    </div>
+
+    <script>
+        // ============ BARÈMES ============
+        const BAREME_800M = {
+            M: [
+                { time: 125, points: 14 }, { time: 130, points: 13.5 }, { time: 134, points: 13 },
+                { time: 139, points: 12.5 }, { time: 144, points: 12 }, { time: 149, points: 11 },
+                { time: 153, points: 10 }, { time: 158, points: 9 }, { time: 163, points: 8 },
+                { time: 167, points: 7.5 }, { time: 172, points: 7 }, { time: 177, points: 6.5 },
+                { time: 182, points: 6 }, { time: 187, points: 5.5 }, { time: 192, points: 5 },
+                { time: 196, points: 4.5 }, { time: 201, points: 4 }, { time: 206, points: 3.5 },
+                { time: 211, points: 3 }, { time: 216, points: 2.5 }, { time: 220, points: 2 },
+                { time: 224, points: 1.5 }, { time: 228, points: 1 }, { time: 232, points: 0.5 }
+            ],
+            F: [
+                { time: 152, points: 14 }, { time: 158, points: 13.5 }, { time: 165, points: 13 },
+                { time: 172, points: 12.5 }, { time: 181, points: 12 }, { time: 188, points: 11 },
+                { time: 194, points: 10 }, { time: 201, points: 9 }, { time: 208, points: 8 },
+                { time: 214, points: 7.5 }, { time: 220, points: 7 }, { time: 226, points: 6.5 },
+                { time: 232, points: 6 }, { time: 239, points: 5.5 }, { time: 246, points: 5 },
+                { time: 252, points: 4.5 }, { time: 259, points: 4 }, { time: 265, points: 3.5 },
+                { time: 272, points: 3 }, { time: 278, points: 2.5 }, { time: 285, points: 2 },
+                { time: 290, points: 1.5 }, { time: 295, points: 1 }, { time: 300, points: 0.5 }
+            ]
+        };
+
+        const BAREME_HAIES = {
+            M: [
+                { time: 16.2, points: 14 }, { time: 16.4, points: 13.5 }, { time: 16.6, points: 13 },
+                { time: 16.9, points: 12.5 }, { time: 17.2, points: 12 }, { time: 17.5, points: 11.5 },
+                { time: 17.8, points: 11 }, { time: 18.1, points: 10.5 }, { time: 18.4, points: 10 },
+                { time: 18.7, points: 9.5 }, { time: 19.0, points: 9 }, { time: 19.3, points: 8.5 },
+                { time: 19.6, points: 8 }, { time: 19.9, points: 7.5 }, { time: 20.2, points: 7 },
+                { time: 20.4, points: 6.5 }, { time: 20.6, points: 6 }, { time: 20.8, points: 5.5 },
+                { time: 21.0, points: 5 }, { time: 21.2, points: 4.5 }, { time: 21.4, points: 4 },
+                { time: 21.6, points: 3.5 }, { time: 21.8, points: 3 }, { time: 22.0, points: 2.5 },
+                { time: 22.2, points: 2 }, { time: 22.4, points: 1.5 }, { time: 22.6, points: 1 },
+                { time: 22.8, points: 0.5 }, { time: 23.0, points: 0 }
+            ],
+            F: [
+                { time: 18.7, points: 14 }, { time: 19.0, points: 13.5 }, { time: 19.3, points: 13 },
+                { time: 19.6, points: 12.5 }, { time: 19.8, points: 12 }, { time: 20.0, points: 11.5 },
+                { time: 20.3, points: 11 }, { time: 20.6, points: 10.5 }, { time: 20.9, points: 10 },
+                { time: 21.2, points: 9.5 }, { time: 21.5, points: 9 }, { time: 21.8, points: 8.5 },
+                { time: 22.1, points: 8 }, { time: 22.4, points: 7.5 }, { time: 22.7, points: 7 },
+                { time: 23.0, points: 6.5 }, { time: 23.3, points: 6 }, { time: 23.6, points: 5.5 },
+                { time: 23.9, points: 5 }, { time: 24.2, points: 4.5 }, { time: 24.5, points: 4 },
+                { time: 24.8, points: 3.5 }, { time: 25.1, points: 3 }, { time: 25.4, points: 2.5 },
+                { time: 25.7, points: 2 }, { time: 26.0, points: 1.5 }, { time: 26.3, points: 1 },
+                { time: 26.6, points: 0.5 }, { time: 26.9, points: 0 }
+            ]
+        };
+
+        const BAREME_PENTABOND = {
+            M: [
+                { dist: 16.55, points: 10 }, { dist: 16.08, points: 9.5 }, { dist: 15.6, points: 9 },
+                { dist: 15.13, points: 8.5 }, { dist: 14.65, points: 8 }, { dist: 14.18, points: 7.5 },
+                { dist: 13.7, points: 7 }, { dist: 13.23, points: 6.5 }, { dist: 12.75, points: 6 },
+                { dist: 12.28, points: 5.5 }, { dist: 11.8, points: 5 }, { dist: 11.33, points: 4.5 },
+                { dist: 10.85, points: 4 }, { dist: 10.38, points: 3.5 }, { dist: 9.9, points: 3 },
+                { dist: 9.43, points: 2.5 }, { dist: 8.95, points: 2 }, { dist: 8.48, points: 1.5 },
+                { dist: 8, points: 1 }
+            ],
+            F: [
+                { dist: 13.48, points: 10 }, { dist: 13.12, points: 9.5 }, { dist: 12.76, points: 9 },
+                { dist: 12.4, points: 8.5 }, { dist: 12.04, points: 8 }, { dist: 11.68, points: 7.5 },
+                { dist: 11.32, points: 7 }, { dist: 10.96, points: 6.5 }, { dist: 10.6, points: 6 },
+                { dist: 10.24, points: 5.5 }, { dist: 9.88, points: 5 }, { dist: 9.52, points: 4.5 },
+                { dist: 9.16, points: 4 }, { dist: 8.8, points: 3.5 }, { dist: 8.44, points: 3 },
+                { dist: 8.08, points: 2.5 }, { dist: 7.72, points: 2 }, { dist: 7.36, points: 1.5 },
+                { dist: 7, points: 1 }
+            ]
+        };
+
+        const ECART_PROJET_COURSE = [
+            { ecart: 0, points: 3 }, { ecart: 5, points: 2 }, { ecart: 10, points: 1 },
+            { ecart: 15, points: 0.5 }, { ecart: 20, points: 0 }
+        ];
+
+        const ECART_TOURS_800M = [
+            { ecart: 0, points: 3 }, { ecart: 5, points: 2 }, { ecart: 10, points: 1 },
+            { ecart: 15, points: 0.5 }, { ecart: 20, points: 0 }
+        ];
+
+        // Écart au projet pentabond (en cm) - CORRIGÉ
+        const ECART_PROJET_PENTABOND = [
+            { ecart: 20, points: 3.5 }, { ecart: 40, points: 3 },
+            { ecart: 60, points: 2 }, { ecart: 80, points: 1 }
+        ];
+
+        const POINTS_DEPART = { 'start': 2, 'trepied': 1, 'debout': 0 };
+
+        // ============ DATA ============
+        let students = [];
+        let currentTab = '800m';
+
+        // ============ UTILITY FUNCTIONS ============
+        function parseTime(str) {
+            if (!str || str.toLowerCase() === 'disp') return null;
+            str = str.toString().replace(',', '.').replace(/['"]/g, ':');
+            
+            if (str.includes(':')) {
+                const parts = str.split(':');
+                if (parts.length === 3) {
+                    return parseInt(parts[0]) * 60 + parseInt(parts[1]) + parseFloat('0.' + parts[2]);
+                } else if (parts.length === 2) {
+                    const first = parseFloat(parts[0]);
+                    const second = parts[1];
+                    if (first >= 1 && !second.includes('.') && parseInt(second) < 60 && parts[0].length <= 2) {
+                        if (first >= 10 || (first < 10 && parseInt(second) >= 10)) {
+                            return first + parseFloat('0.' + second);
+                        } else {
+                            return first * 60 + parseFloat(second);
+                        }
+                    } else {
+                        return first * 60 + parseFloat(second);
+                    }
+                }
+            }
+            return parseFloat(str);
+        }
+
+        function formatTime(seconds) {
+            if (seconds === null || isNaN(seconds)) return '-';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const wholeSecs = Math.floor(secs);
+            const tenths = Math.round((secs - wholeSecs) * 10);
+            
+            if (mins > 0) {
+                return `${mins}:${wholeSecs.toString().padStart(2, '0')}:${tenths}`;
+            }
+            return `${wholeSecs}:${tenths}`;
+        }
+
+        function getNote800m(timeInSeconds, sexe) {
+            if (timeInSeconds === null) return null;
+            const bareme = BAREME_800M[sexe] || BAREME_800M.M;
+            for (let i = 0; i < bareme.length; i++) {
+                if (timeInSeconds <= bareme[i].time) return bareme[i].points;
+            }
+            return 0;
+        }
+
+        function getNoteHaies(timeInSeconds, sexe) {
+            if (timeInSeconds === null) return null;
+            const bareme = BAREME_HAIES[sexe] || BAREME_HAIES.M;
+            for (let i = 0; i < bareme.length; i++) {
+                if (timeInSeconds <= bareme[i].time) return bareme[i].points;
+            }
+            return 0;
+        }
+
+        function getNotePentabond(distInMeters, sexe) {
+            if (distInMeters === null) return null;
+            const bareme = BAREME_PENTABOND[sexe] || BAREME_PENTABOND.M;
+            for (let i = 0; i < bareme.length; i++) {
+                if (distInMeters >= bareme[i].dist) return bareme[i].points;
+            }
+            return 0;
+        }
+
+        function getNoteEcartCourse(ecartSeconds) {
+            if (ecartSeconds === null) return null;
+            for (let i = 0; i < ECART_PROJET_COURSE.length; i++) {
+                if (ecartSeconds <= ECART_PROJET_COURSE[i].ecart) return ECART_PROJET_COURSE[i].points;
+            }
+            return 0;
+        }
+
+        function getNoteEcartTours(ecartSeconds) {
+            if (ecartSeconds === null) return null;
+            for (let i = 0; i < ECART_TOURS_800M.length; i++) {
+                if (ecartSeconds <= ECART_TOURS_800M[i].ecart) return ECART_TOURS_800M[i].points;
+            }
+            return 0;
+        }
+
+        function getNoteEcartPentabond(ecartCm) {
+            if (ecartCm === null) return null;
+            for (let i = 0; i < ECART_PROJET_PENTABOND.length; i++) {
+                if (ecartCm <= ECART_PROJET_PENTABOND[i].ecart) return ECART_PROJET_PENTABOND[i].points;
+            }
+            return 0;
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = isError ? 'toast active error' : 'toast active';
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        // ============ UI FUNCTIONS ============
+        function toggleDropdown() {
+            document.getElementById('importDropdown').classList.toggle('active');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                const dropdown = document.getElementById('importDropdown');
+                if (dropdown) dropdown.classList.remove('active');
+            }
+        });
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('active');
+                setTimeout(() => {
+                    const firstInput = document.getElementById('newNom');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('active');
+        }
+
+        function switchTab(tab, event) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (event) event.target.closest('.tab').classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            renderCurrentTab();
+        }
+
+        function renderCurrentTab() {
+            switch(currentTab) {
+                case '800m': render800m(); break;
+                case 'haies': renderHaies(); break;
+                case 'pentabond': renderPentabond(); break;
+                case 'resultats': renderResultats(); break;
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('totalBoys').textContent = students.filter(s => s.sexe === 'M').length;
+            document.getElementById('totalGirls').textContent = students.filter(s => s.sexe === 'F').length;
+            
+            const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
+            let totalAvg = 0;
+            let count = 0;
+            
+            students.forEach(s => {
+                const avg = calculateAverage(s, avgMode);
+                if (avg !== null) { totalAvg += avg; count++; }
+            });
+            
+            document.getElementById('avgNote').textContent = count > 0 ? (totalAvg / count).toFixed(1) : '-';
+        }
+
+        function calculateAverage(student, mode) {
+            const note800m = student.note800m;
+            const noteHaies = student.noteHaies;
+            const notePentabond = student.notePentabond;
+            
+            if (mode === '3') {
+                const notes = [note800m, noteHaies, notePentabond].filter(n => n !== null && n !== undefined);
+                if (notes.length === 0) return null;
+                return notes.reduce((a, b) => a + b, 0) / notes.length;
+            } else {
+                if (notePentabond === null || notePentabond === undefined) {
+                    const courses = [note800m, noteHaies].filter(n => n !== null && n !== undefined);
+                    if (courses.length === 0) return null;
+                    return Math.max(...courses);
+                }
+                const courses = [note800m, noteHaies].filter(n => n !== null && n !== undefined);
+                if (courses.length === 0) return notePentabond;
+                const meilleureCourse = Math.max(...courses);
+                return (notePentabond + meilleureCourse) / 2;
+            }
+        }
+
+        // Navigation clavier améliorée
+        function handleKeyNav(e, index, field) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const inputs = document.querySelectorAll('.table-input, .table-select');
+                const currentIndex = Array.from(inputs).indexOf(e.target);
+                if (currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                    if (inputs[currentIndex + 1].select) inputs[currentIndex + 1].select();
+                }
+            }
+        }
+
+        // ============ RENDERING FUNCTIONS ============
+        function render800m() {
+            const tbody = document.getElementById('table-800m');
+            const empty = document.getElementById('empty-800m');
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+            
+            tbody.innerHTML = students.map((s, i) => {
+                const isDisp = s.temps800m && s.temps800m.toLowerCase() === 'disp';
+                const temps800m = parseTime(s.temps800m);
+                const temps400m = parseTime(s.temps400m);
+                const projet800m = parseTime(s.projet800m);
+                
+                let temps2e400m = null, ecartTours = null, noteEcartTours = null;
+                let ecartProjet = null, noteEcartProjet = null, notePerf = null, noteFinale = null;
+                
+                if (!isDisp && temps800m !== null && temps400m !== null) {
+                    temps2e400m = temps800m - temps400m;
+                    if (temps2e400m >= 0) {
+                        ecartTours = Math.abs(temps400m - temps2e400m);
+                        noteEcartTours = getNoteEcartTours(ecartTours);
+                    }
+                }
+                
+                if (!isDisp && temps800m !== null && projet800m !== null) {
+                    ecartProjet = Math.abs(temps800m - projet800m);
+                    noteEcartProjet = getNoteEcartCourse(ecartProjet);
+                }
+                
+                if (!isDisp && temps800m !== null) {
+                    notePerf = getNote800m(temps800m, s.sexe);
+                }
+                
+                if (notePerf !== null) {
+                    noteFinale = notePerf + (noteEcartTours || 0) + (noteEcartProjet || 0);
+                    students[i].note800m = noteFinale;
+                } else {
+                    students[i].note800m = null;
+                }
+                
+                return `
+                    <tr class="${isDisp ? 'disp-row' : ''}">
+                        <td class="student-name">${escapeHtml(s.nom)}</td>
+                        <td>${escapeHtml(s.prenom)}</td>
+                        <td class="student-info">${escapeHtml(s.groupe)}</td>
+                        <td class="student-info">${s.sexe}</td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.projet800m || '')}" onchange="updateStudent(${i}, 'projet800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projet800m')" placeholder="2:30:0"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps400m || '')}" onchange="updateStudent(${i}, 'temps400m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps400m')" placeholder="1:10:0"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps800m || '')}" onchange="updateStudent(${i}, 'temps800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps800m')" placeholder="2:35:0"></td>
+                        <td class="calculated">${formatTime(temps2e400m)}</td>
+                        <td class="calculated">${ecartTours !== null ? ecartTours.toFixed(1) : '-'}</td>
+                        <td class="calculated">${noteEcartTours !== null ? noteEcartTours : '-'}</td>
+                        <td class="calculated">${ecartProjet !== null ? ecartProjet.toFixed(1) : '-'}</td>
+                        <td class="calculated">${noteEcartProjet !== null ? noteEcartProjet : '-'}</td>
+                        <td class="calculated">${notePerf !== null ? notePerf : '-'}</td>
+                        <td class="note-cell">${isDisp ? 'DISP' : (noteFinale !== null ? noteFinale.toFixed(1) : '-')}</td>
+                        <td><button class="delete-btn" onclick="deleteStudent(${i})" type="button" title="Supprimer">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateStats();
+        }
+
+        function renderHaies() {
+            const tbody = document.getElementById('table-haies');
+            const empty = document.getElementById('empty-haies');
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+            
+            tbody.innerHTML = students.map((s, i) => {
+                const isDisp = s.tempsHaies && s.tempsHaies.toLowerCase() === 'disp';
+                const tempsHaies = parseTime(s.tempsHaies);
+                const projetHaies = parseTime(s.projetHaies);
+                
+                let ecartProjet = null, noteEcartProjet = null, notePerf = null;
+                let pointsDepart = POINTS_DEPART[s.typeDepart] || 0;
+                let noteFinale = null;
+                
+                if (!isDisp && tempsHaies !== null && projetHaies !== null) {
+                    ecartProjet = Math.abs(tempsHaies - projetHaies);
+                    noteEcartProjet = getNoteEcartCourse(ecartProjet);
+                }
+                
+                if (!isDisp && tempsHaies !== null) {
+                    notePerf = getNoteHaies(tempsHaies, s.sexe);
+                }
+                
+                if (notePerf !== null) {
+                    noteFinale = notePerf + pointsDepart + (noteEcartProjet || 0);
+                    students[i].noteHaies = noteFinale;
+                } else {
+                    students[i].noteHaies = null;
+                }
+                
+                return `
+                    <tr class="${isDisp ? 'disp-row' : ''}">
+                        <td class="student-name">${escapeHtml(s.nom)}</td>
+                        <td>${escapeHtml(s.prenom)}</td>
+                        <td class="student-info">${escapeHtml(s.groupe)}</td>
+                        <td class="student-info">${s.sexe}</td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.projetHaies || '')}" onchange="updateStudent(${i}, 'projetHaies', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projetHaies')" placeholder="18.5"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.tempsHaies || '')}" onchange="updateStudent(${i}, 'tempsHaies', this.value)" onkeydown="handleKeyNav(event, ${i}, 'tempsHaies')" placeholder="19.2"></td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'typeDepart', this.value)" onkeydown="handleKeyNav(event, ${i}, 'typeDepart')">
+                                <option value="" ${!s.typeDepart ? 'selected' : ''}>-</option>
+                                <option value="start" ${s.typeDepart === 'start' ? 'selected' : ''}>Start (2)</option>
+                                <option value="trepied" ${s.typeDepart === 'trepied' ? 'selected' : ''}>Trépied (1)</option>
+                                <option value="debout" ${s.typeDepart === 'debout' ? 'selected' : ''}>Debout (0)</option>
+                            </select>
+                        </td>
+                        <td class="calculated">${s.typeDepart ? pointsDepart : '-'}</td>
+                        <td class="calculated">${ecartProjet !== null ? ecartProjet.toFixed(1) : '-'}</td>
+                        <td class="calculated">${noteEcartProjet !== null ? noteEcartProjet : '-'}</td>
+                        <td class="calculated">${notePerf !== null ? notePerf : '-'}</td>
+                        <td class="note-cell">${isDisp ? 'DISP' : (noteFinale !== null ? noteFinale.toFixed(1) : '-')}</td>
+                        <td><button class="delete-btn" onclick="deleteStudent(${i})" type="button" title="Supprimer">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateStats();
+        }
+
+        function renderPentabond() {
+            const tbody = document.getElementById('table-pentabond');
+            const empty = document.getElementById('empty-pentabond');
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+            
+            tbody.innerHTML = students.map((s, i) => {
+                const isDisp = s.perfPentabond && s.perfPentabond.toLowerCase() === 'disp';
+                const perf = parseFloat((s.perfPentabond || '').replace(',', '.'));
+                const projet = parseFloat((s.projetPentabond || '').replace(',', '.'));
+                
+                let ecartProjet = null, noteEcartProjet = null, notePerf = null, noteFinale = null;
+                
+                const pointsElan = { '3/3': 3.5, '2/3': 1.5, '1/3': 0.5 };
+                const pointsSaut = { 'cloche': 1, 'foulee': 0 };
+                const pointsEquilibre = { 'optimise': 3, 'regulier': 2, 'perturbe': 1 };
+                
+                const ptsElan = pointsElan[s.elan] || 0;
+                const ptsSaut = pointsSaut[s.premierSaut] || 0;
+                const ptsEquilibre = pointsEquilibre[s.equilibre] || 0;
+                
+                if (!isDisp && !isNaN(perf) && !isNaN(projet)) {
+                    ecartProjet = Math.abs(perf - projet) * 100;
+                    noteEcartProjet = getNoteEcartPentabond(ecartProjet);
+                }
+                
+                if (!isDisp && !isNaN(perf)) {
+                    notePerf = getNotePentabond(perf, s.sexe);
+                }
+                
+                if (notePerf !== null) {
+                    noteFinale = notePerf + ptsElan + ptsSaut + ptsEquilibre + (noteEcartProjet || 0);
+                    students[i].notePentabond = noteFinale;
+                } else {
+                    students[i].notePentabond = null;
+                }
+                
+                return `
+                    <tr class="${isDisp ? 'disp-row' : ''}">
+                        <td class="student-name">${escapeHtml(s.nom)}</td>
+                        <td>${escapeHtml(s.prenom)}</td>
+                        <td class="student-info">${escapeHtml(s.groupe)}</td>
+                        <td class="student-info">${s.sexe}</td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.projetPentabond || '')}" onchange="updateStudent(${i}, 'projetPentabond', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projetPentabond')" placeholder="12.50"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.perfPentabond || '')}" onchange="updateStudent(${i}, 'perfPentabond', this.value)" onkeydown="handleKeyNav(event, ${i}, 'perfPentabond')" placeholder="12.75"></td>
+                        <td class="calculated">${ecartProjet !== null ? (ecartProjet / 100).toFixed(2) : '-'}</td>
+                        <td class="calculated">${noteEcartProjet !== null ? noteEcartProjet : '-'}</td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'elan', this.value)" onkeydown="handleKeyNav(event, ${i}, 'elan')">
+                                <option value="" ${!s.elan ? 'selected' : ''}>-</option>
+                                <option value="3/3" ${s.elan === '3/3' ? 'selected' : ''}>3/3 (3.5)</option>
+                                <option value="2/3" ${s.elan === '2/3' ? 'selected' : ''}>2/3 (1.5)</option>
+                                <option value="1/3" ${s.elan === '1/3' ? 'selected' : ''}>1/3 (0.5)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'premierSaut', this.value)" onkeydown="handleKeyNav(event, ${i}, 'premierSaut')">
+                                <option value="" ${!s.premierSaut ? 'selected' : ''}>-</option>
+                                <option value="cloche" ${s.premierSaut === 'cloche' ? 'selected' : ''}>Cloche (1)</option>
+                                <option value="foulee" ${s.premierSaut === 'foulee' ? 'selected' : ''}>Foulée (0)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'equilibre', this.value)" onkeydown="handleKeyNav(event, ${i}, 'equilibre')">
+                                <option value="" ${!s.equilibre ? 'selected' : ''}>-</option>
+                                <option value="optimise" ${s.equilibre === 'optimise' ? 'selected' : ''}>Opti. (3)</option>
+                                <option value="regulier" ${s.equilibre === 'regulier' ? 'selected' : ''}>Rég. (2)</option>
+                                <option value="perturbe" ${s.equilibre === 'perturbe' ? 'selected' : ''}>Pert. (1)</option>
+                            </select>
+                        </td>
+                        <td class="calculated">${notePerf !== null ? notePerf : '-'}</td>
+                        <td class="note-cell">${isDisp ? 'DISP' : (noteFinale !== null ? noteFinale.toFixed(1) : '-')}</td>
+                        <td><button class="delete-btn" onclick="deleteStudent(${i})" type="button" title="Supprimer">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateStats();
+        }
+
+        function renderResultats() {
+            const tbody = document.getElementById('table-resultats');
+            const empty = document.getElementById('empty-resultats');
+            
+            // Force recalculation
+            students.forEach((s, i) => {
+                // 800m
+                const isDisp800m = s.temps800m && s.temps800m.toLowerCase() === 'disp';
+                const temps800m = parseTime(s.temps800m);
+                const temps400m = parseTime(s.temps400m);
+                const projet800m = parseTime(s.projet800m);
+                
+                if (!isDisp800m && temps800m !== null) {
+                    let notePerf = getNote800m(temps800m, s.sexe);
+                    let noteEcartTours = 0, noteEcartProjet = 0;
+                    
+                    if (temps400m !== null) {
+                        const temps2e400m = temps800m - temps400m;
+                        if (temps2e400m >= 0) {
+                            noteEcartTours = getNoteEcartTours(Math.abs(temps400m - temps2e400m)) || 0;
+                        }
+                    }
+                    if (projet800m !== null) {
+                        noteEcartProjet = getNoteEcartCourse(Math.abs(temps800m - projet800m)) || 0;
+                    }
+                    students[i].note800m = notePerf + noteEcartTours + noteEcartProjet;
+                } else {
+                    students[i].note800m = null;
+                }
+                
+                // Haies
+                const isDispHaies = s.tempsHaies && s.tempsHaies.toLowerCase() === 'disp';
+                const tempsHaies = parseTime(s.tempsHaies);
+                const projetHaies = parseTime(s.projetHaies);
+                
+                if (!isDispHaies && tempsHaies !== null) {
+                    let notePerf = getNoteHaies(tempsHaies, s.sexe);
+                    let pointsDepart = POINTS_DEPART[s.typeDepart] || 0;
+                    let noteEcartProjet = 0;
+                    if (projetHaies !== null) {
+                        noteEcartProjet = getNoteEcartCourse(Math.abs(tempsHaies - projetHaies)) || 0;
+                    }
+                    students[i].noteHaies = notePerf + pointsDepart + noteEcartProjet;
+                } else {
+                    students[i].noteHaies = null;
+                }
+                
+                // Pentabond
+                const isDispPenta = s.perfPentabond && s.perfPentabond.toLowerCase() === 'disp';
+                const perf = parseFloat((s.perfPentabond || '').replace(',', '.'));
+                const projet = parseFloat((s.projetPentabond || '').replace(',', '.'));
+                
+                if (!isDispPenta && !isNaN(perf)) {
+                    let notePerf = getNotePentabond(perf, s.sexe);
+                    const pointsElan = { '3/3': 3.5, '2/3': 1.5, '1/3': 0.5 };
+                    const pointsSaut = { 'cloche': 1, 'foulee': 0 };
+                    const pointsEquilibre = { 'optimise': 3, 'regulier': 2, 'perturbe': 1 };
+                    
+                    let noteEcartProjet = 0;
+                    if (!isNaN(projet)) {
+                        noteEcartProjet = getNoteEcartPentabond(Math.abs(perf - projet) * 100) || 0;
+                    }
+                    students[i].notePentabond = notePerf + (pointsElan[s.elan] || 0) + (pointsSaut[s.premierSaut] || 0) + (pointsEquilibre[s.equilibre] || 0) + noteEcartProjet;
+                } else {
+                    students[i].notePentabond = null;
+                }
+            });
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+            
+            const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
+            
+            tbody.innerHTML = students.map((s, i) => {
+                const avg = calculateAverage(s, avgMode);
+                return `
+                    <tr>
+                        <td class="student-name">${escapeHtml(s.nom)}</td>
+                        <td>${escapeHtml(s.prenom)}</td>
+                        <td class="student-info">${escapeHtml(s.groupe)}</td>
+                        <td class="student-info">${s.sexe}</td>
+                        <td class="${s.note800m !== null ? 'calculated' : ''}" style="${s.note800m === null ? 'opacity: 0.5;' : ''}">${s.note800m !== null ? s.note800m.toFixed(1) : 'DISP'}</td>
+                        <td class="${s.noteHaies !== null ? 'calculated' : ''}" style="${s.noteHaies === null ? 'opacity: 0.5;' : ''}">${s.noteHaies !== null ? s.noteHaies.toFixed(1) : 'DISP'}</td>
+                        <td class="${s.notePentabond !== null ? 'calculated' : ''}" style="${s.notePentabond === null ? 'opacity: 0.5;' : ''}">${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'}</td>
+                        <td class="note-cell">${avg !== null ? avg.toFixed(2) : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateStats();
+        }
+
+        function updateAllResults() {
+            render800m(); renderHaies(); renderPentabond(); renderResultats();
+        }
+
+        // ============ STUDENT MANAGEMENT ============
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function addStudent(event) {
+            event.preventDefault();
+            
+            const student = {
+                nom: document.getElementById('newNom').value.trim(),
+                prenom: document.getElementById('newPrenom').value.trim(),
+                groupe: document.getElementById('newGroupe').value.trim(),
+                sexe: document.getElementById('newSexe').value,
+                projet800m: '', temps400m: '', temps800m: '', note800m: null,
+                projetHaies: '', tempsHaies: '', typeDepart: '', noteHaies: null,
+                projetPentabond: '', perfPentabond: '', elan: '', premierSaut: '', equilibre: '', notePentabond: null
+            };
+            
+            students.push(student);
+            closeModal('addStudentModal');
+            
+            // Reset form
+            document.getElementById('newNom').value = '';
+            document.getElementById('newPrenom').value = '';
+            document.getElementById('newGroupe').value = '';
+            
+            showToast(`✅ ${student.prenom} ${student.nom} ajouté(e)`);
+            renderCurrentTab();
+        }
+
+        function updateStudent(index, field, value) {
+            students[index][field] = value;
+            renderCurrentTab();
+        }
+
+        function deleteStudent(index) {
+            const student = students[index];
+            if (confirm(`Supprimer ${student.prenom} ${student.nom} ?`)) {
+                students.splice(index, 1);
+                showToast(`🗑️ Élève supprimé`);
+                renderCurrentTab();
+            }
+        }
+
+        // ============ IMPORT FUNCTIONS ============
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const count = parseCSVData(e.target.result);
+                showToast(`✅ ${count} élève(s) importé(s)`);
+                document.getElementById('importDropdown').classList.remove('active');
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function parseCSVData(text) {
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length < 2) return 0;
+            
+            const headers = lines[0].split(/[;,\t]/).map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            let count = 0;
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(/[;,\t]/).map(v => v.trim());
+                if (values.length < 2) continue;
+                
+                const nomIdx = headers.findIndex(h => h === 'nom' || (h.includes('nom') && !h.includes('prenom')));
+                const prenomIdx = headers.findIndex(h => h === 'prenom' || h.includes('prenom'));
+                const groupeIdx = headers.findIndex(h => h.includes('groupe') || h.includes('class') || h.includes('grp'));
+                const sexeIdx = headers.findIndex(h => h.includes('sexe') || h.includes('genre') || h === 'sex');
+                
+                let nom = values[nomIdx >= 0 ? nomIdx : 0] || '';
+                let prenom = values[prenomIdx >= 0 ? prenomIdx : 1] || '';
+                let groupe = values[groupeIdx >= 0 ? groupeIdx : 2] || '';
+                let sexe = (values[sexeIdx >= 0 ? sexeIdx : 3] || 'M').toUpperCase();
+                sexe = sexe.charAt(0) === 'F' || sexe.includes('FEM') || sexe.includes('FILLE') ? 'F' : 'M';
+                
+                const student = {
+                    nom, prenom, groupe, sexe,
+                    projet800m: '', temps400m: '', temps800m: '', note800m: null,
+                    projetHaies: '', tempsHaies: '', typeDepart: '', noteHaies: null,
+                    projetPentabond: '', perfPentabond: '', elan: '', premierSaut: '', equilibre: '', notePentabond: null
+                };
+                
+                if (student.nom || student.prenom) { students.push(student); count++; }
+            }
+            
+            renderCurrentTab();
+            return count;
+        }
+
+        function importExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const csv = XLSX.utils.sheet_to_csv(sheet, { FS: ';' });
+                    const count = parseCSVData(csv);
+                    showToast(`✅ ${count} élève(s) importé(s)`);
+                    document.getElementById('importDropdown').classList.remove('active');
+                } catch (err) {
+                    showToast('❌ Erreur lors de la lecture Excel', true);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        async function importPDF(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let text = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(item => item.str).join(' ') + '\n';
+                }
+                
+                const lines = text.split('\n').filter(l => l.trim());
+                let csvText = 'Nom;Prénom;Groupe;Sexe\n';
+                let foundData = false;
+                
+                for (const line of lines) {
+                    const parts = line.split(/\s{2,}|\t/).filter(p => p.trim());
+                    if (parts.length >= 2) {
+                        const hasName = parts.some(p => /^[A-Za-zÀ-ÿ-]+$/.test(p.trim()));
+                        if (hasName && parts.length >= 2) {
+                            csvText += parts.slice(0, 4).join(';') + '\n';
+                            foundData = true;
+                        }
+                    }
+                }
+                
+                if (foundData) {
+                    const count = parseCSVData(csvText);
+                    showToast(`✅ ${count} élève(s) importé(s)`);
+                } else {
+                    showToast('⚠️ Aucune donnée trouvée', true);
+                }
+                document.getElementById('importDropdown').classList.remove('active');
+            } catch (err) {
+                showToast('❌ Erreur PDF', true);
+            }
+            event.target.value = '';
+        }
+
+        // ============ EXPORT FUNCTION ============
+        function exportResults() {
+            if (students.length === 0) {
+                showToast('⚠️ Aucun élève', true);
+                return;
+            }
+            
+            renderResultats();
+            const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
+            
+            let csv = 'Nom;Prénom;Groupe;Sexe;Note 800m;Note Haies;Note Pentabond;Moyenne\n';
+            students.forEach(s => {
+                const avg = calculateAverage(s, avgMode);
+                csv += `${s.nom};${s.prenom};${s.groupe};${s.sexe};`;
+                csv += `${s.note800m !== null ? s.note800m.toFixed(1) : 'DISP'};`;
+                csv += `${s.noteHaies !== null ? s.noteHaies.toFixed(1) : 'DISP'};`;
+                csv += `${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'};`;
+                csv += `${avg !== null ? avg.toFixed(2) : ''}\n`;
+            });
+            
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resultats_athletisme_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('📥 Export CSV réussi');
+        }
+
+        // ============ EVENT LISTENERS ============
+        // Form submission
+        document.getElementById('addStudentForm').addEventListener('submit', addStudent);
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+                document.getElementById('importDropdown')?.classList.remove('active');
+            }
+        });
+
+        // ============ SERVICE WORKER ============
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service_worker.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    document.getElementById('updateBanner').classList.add('active');
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // Initial render
+        render800m();
+    </script>
+</body>
+</html>
