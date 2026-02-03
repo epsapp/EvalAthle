@@ -175,6 +175,16 @@
             box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
         /* Main Container */
         .container {
             max-width: 1800px;
@@ -828,6 +838,9 @@
                 <button class="btn btn-success" onclick="exportResults()" type="button">
                     📥 Export
                 </button>
+                <button class="btn btn-danger" onclick="effacerToutesLesDonnees()" type="button">
+                    🗑️ Effacer
+                </button>
             </div>
         </div>
     </header>
@@ -1160,6 +1173,38 @@
         // ============ DATA ============
         let students = [];
         let currentTab = '800m';
+
+        // ============ PERSISTANCE DES DONNÉES ============
+        function sauvegarderDonnees() {
+            try {
+                localStorage.setItem('athletisme_students', JSON.stringify(students));
+                localStorage.setItem('athletisme_lastSave', new Date().toISOString());
+            } catch (e) {
+                console.error('Erreur sauvegarde:', e);
+            }
+        }
+
+        function chargerDonnees() {
+            try {
+                const data = localStorage.getItem('athletisme_students');
+                if (data) {
+                    students = JSON.parse(data);
+                    console.log(`✅ ${students.length} élève(s) chargé(s)`);
+                }
+            } catch (e) {
+                console.error('Erreur chargement:', e);
+                students = [];
+            }
+        }
+
+        function effacerToutesLesDonnees() {
+            if (confirm('⚠️ ATTENTION : Voulez-vous vraiment effacer toutes les données ?\n\nCette action est irréversible et supprimera tous les élèves et leurs notes.')) {
+                localStorage.clear();
+                students = [];
+                showToast('🗑️ Toutes les données ont été effacées');
+                renderCurrentTab();
+            }
+        }
 
         // ============ UTILITY FUNCTIONS ============
         function parseTime(str) {
@@ -1715,6 +1760,7 @@
             };
             
             students.push(student);
+            sauvegarderDonnees();
             closeModal('addStudentModal');
             
             // Reset form
@@ -1728,6 +1774,7 @@
 
         function updateStudent(index, field, value) {
             students[index][field] = value;
+            sauvegarderDonnees();
             renderCurrentTab();
         }
 
@@ -1735,6 +1782,7 @@
             const student = students[index];
             if (confirm(`Supprimer ${student.prenom} ${student.nom} ?`)) {
                 students.splice(index, 1);
+                sauvegarderDonnees();
                 showToast(`🗑️ Élève supprimé`);
                 renderCurrentTab();
             }
@@ -1787,6 +1835,7 @@
                 if (student.nom || student.prenom) { students.push(student); count++; }
             }
             
+            sauvegarderDonnees();
             renderCurrentTab();
             return count;
         }
@@ -1930,7 +1979,8 @@
             });
         }
 
-        // Initial render
+        // ============ CHARGEMENT INITIAL ============
+        chargerDonnees();
         render800m();
     </script>
 </body>
