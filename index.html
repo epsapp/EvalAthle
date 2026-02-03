@@ -1169,21 +1169,14 @@
             if (str.includes(':')) {
                 const parts = str.split(':');
                 if (parts.length === 3) {
+                    // Format min:sec:dixièmes (ex: 2:12:1 = 2min 12sec 1dixième)
                     return parseInt(parts[0]) * 60 + parseInt(parts[1]) + parseFloat('0.' + parts[2]);
                 } else if (parts.length === 2) {
-                    const first = parseFloat(parts[0]);
-                    const second = parts[1];
-                    if (first >= 1 && !second.includes('.') && parseInt(second) < 60 && parts[0].length <= 2) {
-                        if (first >= 10 || (first < 10 && parseInt(second) >= 10)) {
-                            return first + parseFloat('0.' + second);
-                        } else {
-                            return first * 60 + parseFloat(second);
-                        }
-                    } else {
-                        return first * 60 + parseFloat(second);
-                    }
+                    // Format min:sec (ex: 2:12 = 2min 12sec 0dixième)
+                    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
                 }
             }
+            // Format décimal simple (ex: 18.5 pour les haies)
             return parseFloat(str);
         }
 
