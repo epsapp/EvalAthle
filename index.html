@@ -1129,9 +1129,19 @@
             ]
         };
 
-        const ECART_PROJET_COURSE = [
+        // Écart au projet 800m (en secondes)
+        const ECART_PROJET_800M = [
             { ecart: 5, points: 3 }, { ecart: 10, points: 1.5 }, { ecart: 20, points: 0 },
             { ecart: 150, points: -1 }
+        ];
+
+        // Écart au projet HAIES (en secondes) - NOUVEAU BARÈME SPÉCIFIQUE
+        const ECART_PROJET_HAIES = [
+            { ecart: 0.2, points: 4 },
+            { ecart: 0.3, points: 3 },
+            { ecart: 0.4, points: 2 },
+            { ecart: 0.5, points: 1 },
+            { ecart: 999, points: 0 }
         ];
 
         const ECART_TOURS_800M = [
@@ -1139,7 +1149,7 @@
             { ecart: 35, points: 0 }, { ecart: 150, points: -1 }
         ];
 
-        // Écart au projet pentabond (en cm) - CORRIGÉ
+        // Écart au projet pentabond (en cm)
         const ECART_PROJET_PENTABOND = [
             { ecart: 20, points: 3.5 }, { ecart: 40, points: 3 },
             { ecart: 60, points: 2 }, { ecart: 80, points: 1 }
@@ -1217,10 +1227,20 @@
             return 0;
         }
 
-        function getNoteEcartCourse(ecartSeconds) {
+        // Écart au projet pour le 800m
+        function getNoteEcartProjet800m(ecartSeconds) {
             if (ecartSeconds === null) return null;
-            for (let i = 0; i < ECART_PROJET_COURSE.length; i++) {
-                if (ecartSeconds <= ECART_PROJET_COURSE[i].ecart) return ECART_PROJET_COURSE[i].points;
+            for (let i = 0; i < ECART_PROJET_800M.length; i++) {
+                if (ecartSeconds <= ECART_PROJET_800M[i].ecart) return ECART_PROJET_800M[i].points;
+            }
+            return 0;
+        }
+
+        // Écart au projet pour les HAIES - NOUVELLE FONCTION
+        function getNoteEcartProjetHaies(ecartSeconds) {
+            if (ecartSeconds === null) return null;
+            for (let i = 0; i < ECART_PROJET_HAIES.length; i++) {
+                if (ecartSeconds <= ECART_PROJET_HAIES[i].ecart) return ECART_PROJET_HAIES[i].points;
             }
             return 0;
         }
@@ -1383,7 +1403,7 @@
                 
                 if (!isDisp && temps800m !== null && projet800m !== null) {
                     ecartProjet = Math.abs(temps800m - projet800m);
-                    noteEcartProjet = getNoteEcartCourse(ecartProjet);
+                    noteEcartProjet = getNoteEcartProjet800m(ecartProjet);
                 }
                 
                 if (!isDisp && temps800m !== null) {
@@ -1446,7 +1466,8 @@
                 
                 if (!isDisp && tempsHaies !== null && projetHaies !== null) {
                     ecartProjet = Math.abs(tempsHaies - projetHaies);
-                    noteEcartProjet = getNoteEcartCourse(ecartProjet);
+                    // Utilisation du NOUVEAU barème spécifique aux haies
+                    noteEcartProjet = getNoteEcartProjetHaies(ecartProjet);
                 }
                 
                 if (!isDisp && tempsHaies !== null) {
@@ -1477,7 +1498,7 @@
                             </select>
                         </td>
                         <td class="calculated">${s.typeDepart ? pointsDepart : '-'}</td>
-                        <td class="calculated">${ecartProjet !== null ? ecartProjet.toFixed(1) : '-'}</td>
+                        <td class="calculated">${ecartProjet !== null ? ecartProjet.toFixed(2) : '-'}</td>
                         <td class="calculated">${noteEcartProjet !== null ? noteEcartProjet : '-'}</td>
                         <td class="calculated">${notePerf !== null ? notePerf : '-'}</td>
                         <td class="note-cell">${isDisp ? 'DISP' : (noteFinale !== null ? noteFinale.toFixed(1) : '-')}</td>
@@ -1600,7 +1621,7 @@
                         }
                     }
                     if (projet800m !== null) {
-                        noteEcartProjet = getNoteEcartCourse(Math.abs(temps800m - projet800m)) || 0;
+                        noteEcartProjet = getNoteEcartProjet800m(Math.abs(temps800m - projet800m)) || 0;
                     }
                     students[i].note800m = notePerf + noteEcartTours + noteEcartProjet;
                 } else {
@@ -1617,7 +1638,8 @@
                     let pointsDepart = POINTS_DEPART[s.typeDepart] || 0;
                     let noteEcartProjet = 0;
                     if (projetHaies !== null) {
-                        noteEcartProjet = getNoteEcartCourse(Math.abs(tempsHaies - projetHaies)) || 0;
+                        // Utilisation du barème spécifique aux haies
+                        noteEcartProjet = getNoteEcartProjetHaies(Math.abs(tempsHaies - projetHaies)) || 0;
                     }
                     students[i].noteHaies = notePerf + pointsDepart + noteEcartProjet;
                 } else {
