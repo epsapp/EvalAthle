@@ -1821,35 +1821,79 @@
         function parseCSVData(text) {
             const lines = text.split('\n').filter(l => l.trim());
             if (lines.length < 2) return 0;
-            
+
             const headers = lines[0].split(/[;,\t]/).map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            // Version sans espaces/tirets/underscores pour la détection des colonnes performances
+            const hn = headers.map(h => h.replace(/[\s_\-]/g, ''));
+
+            // Colonnes identité
+            const nomIdx      = headers.findIndex(h => h === 'nom' || (h.includes('nom') && !h.includes('prenom')));
+            const prenomIdx   = headers.findIndex(h => h === 'prenom' || h.includes('prenom'));
+            const groupeIdx   = headers.findIndex(h => h.includes('groupe') || h.includes('class') || h.includes('grp'));
+            const sexeIdx     = headers.findIndex(h => h.includes('sexe') || h.includes('genre') || h === 'sex');
+            // Colonnes 800m
+            const p800mIdx    = hn.findIndex(h => h === 'projet800m' || (h.includes('projet') && h.includes('800')));
+            const t400mIdx    = hn.findIndex(h => h === 'temps400m'  || h === '400m' || (h.includes('400') && h.includes('temps')));
+            const t800mIdx    = hn.findIndex(h => h === 'temps800m'  || (h.includes('800') && h.includes('temps')));
+            // Colonnes haies
+            const pHaiesIdx   = hn.findIndex(h => h === 'projethaies' || (h.includes('projet') && h.includes('haies')));
+            const tHaiesIdx   = hn.findIndex(h => h === 'tempshaies'  || h === 'haies' || (h.includes('haies') && !h.includes('projet')));
+            const departIdx   = hn.findIndex(h => h === 'typedepart'  || h.includes('depart'));
+            // Colonnes pentabond
+            const pPentaIdx   = hn.findIndex(h => h === 'projetpentabond' || (h.includes('projet') && h.includes('pentabond')));
+            const perfPentaIdx= hn.findIndex(h => h === 'perfpentabond'   || (h.includes('pentabond') && !h.includes('projet')));
+            const elanIdx     = hn.findIndex(h => h === 'elan');
+            const sautIdx     = hn.findIndex(h => h === 'premiersaut' || (h.includes('premier') && h.includes('saut')));
+            const equilibreIdx= hn.findIndex(h => h === 'equilibre');
+
             let count = 0;
-            
+
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(/[;,\t]/).map(v => v.trim());
                 if (values.length < 2) continue;
-                
-                const nomIdx = headers.findIndex(h => h === 'nom' || (h.includes('nom') && !h.includes('prenom')));
-                const prenomIdx = headers.findIndex(h => h === 'prenom' || h.includes('prenom'));
-                const groupeIdx = headers.findIndex(h => h.includes('groupe') || h.includes('class') || h.includes('grp'));
-                const sexeIdx = headers.findIndex(h => h.includes('sexe') || h.includes('genre') || h === 'sex');
-                
-                let nom = values[nomIdx >= 0 ? nomIdx : 0] || '';
-                let prenom = values[prenomIdx >= 0 ? prenomIdx : 1] || '';
-                let groupe = values[groupeIdx >= 0 ? groupeIdx : 2] || '';
-                let sexe = (values[sexeIdx >= 0 ? sexeIdx : 3] || 'M').toUpperCase();
+
+                const get = idx => (idx >= 0 && idx < values.length) ? values[idx] : '';
+
+                let nom    = get(nomIdx >= 0 ? nomIdx : 0);
+                let prenom = get(prenomIdx >= 0 ? prenomIdx : 1);
+                let groupe = get(groupeIdx >= 0 ? groupeIdx : 2);
+                let sexe   = (get(sexeIdx >= 0 ? sexeIdx : 3) || 'M').toUpperCase();
                 sexe = sexe.charAt(0) === 'F' || sexe.includes('FEM') || sexe.includes('FILLE') ? 'F' : 'M';
-                
+
+                // Normalisation typeDepart
+                let typeDepart = get(departIdx).toLowerCase().trim();
+                if      (typeDepart === 'start'   || typeDepart.includes('bloc'))                       typeDepart = 'start';
+                else if (typeDepart === 'trepied' || typeDepart.includes('tre') || typeDepart === '3')  typeDepart = 'trepied';
+                else if (typeDepart === 'debout'  || typeDepart.includes('deb'))                        typeDepart = 'debout';
+                else typeDepart = '';
+
+                // Normalisation élan
+                let elan = get(elanIdx).trim();
+                if (!['3/3', '2/3', '1/3'].includes(elan)) elan = '';
+
+                // Normalisation premierSaut
+                let premierSaut = get(sautIdx).toLowerCase().trim();
+                if      (premierSaut.includes('clo')) premierSaut = 'cloche';
+                else if (premierSaut.includes('fou')) premierSaut = 'foulee';
+                else premierSaut = '';
+
+                // Normalisation equilibre
+                let equilibre = get(equilibreIdx).toLowerCase().trim();
+                if      (equilibre.includes('opt')) equilibre = 'optimise';
+                else if (equilibre.includes('reg')) equilibre = 'regulier';
+                else if (equilibre.includes('per')) equilibre = 'perturbe';
+                else equilibre = '';
+
                 const student = {
                     nom, prenom, groupe, sexe,
-                    projet800m: '', temps400m: '', temps800m: '', note800m: null,
-                    projetHaies: '', tempsHaies: '', typeDepart: '', noteHaies: null,
-                    projetPentabond: '', perfPentabond: '', elan: '', premierSaut: '', equilibre: '', notePentabond: null
+                    projet800m: get(p800mIdx), temps400m: get(t400mIdx), temps800m: get(t800mIdx), note800m: null,
+                    projetHaies: get(pHaiesIdx), tempsHaies: get(tHaiesIdx), typeDepart, noteHaies: null,
+                    projetPentabond: get(pPentaIdx), perfPentabond: get(perfPentaIdx), elan, premierSaut, equilibre, notePentabond: null
                 };
-                
+
                 if (student.nom || student.prenom) { students.push(student); count++; }
             }
-            
+
             sauvegarderDonnees();
             renderCurrentTab();
             return count;
