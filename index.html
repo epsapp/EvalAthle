@@ -1148,12 +1148,12 @@
             { ecart: 150, points: -1 }
         ];
 
-        // Écart au projet HAIES (en secondes) - NOUVEAU BARÈME SPÉCIFIQUE
+        // Écart au projet HAIES (en secondes) - BARÈME SPÉCIFIQUE
         const ECART_PROJET_HAIES = [
-            { ecart: 0.2, points: 4 },
-            { ecart: 0.3, points: 3 },
-            { ecart: 0.4, points: 2 },
-            { ecart: 0.5, points: 1 },
+            { ecart: 0.5, points: 4 },
+            { ecart: 0.75, points: 3 },
+            { ecart: 1.0, points: 2 },
+            { ecart: 1.25, points: 1 },
             { ecart: 999, points: 0 }
         ];
 
@@ -1460,7 +1460,12 @@
                         <td class="student-name">${escapeHtml(s.nom)}</td>
                         <td>${escapeHtml(s.prenom)}</td>
                         <td class="student-info">${escapeHtml(s.groupe)}</td>
-                        <td class="student-info">${s.sexe}</td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'sexe', this.value)">
+                                <option value="M" ${s.sexe === 'M' ? 'selected' : ''}>M</option>
+                                <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
+                            </select>
+                        </td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.projet800m || '')}" onchange="updateStudent(${i}, 'projet800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projet800m')" placeholder="2:30:0"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.temps400m || '')}" onchange="updateStudent(${i}, 'temps400m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps400m')" placeholder="1:10:0"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.temps800m || '')}" onchange="updateStudent(${i}, 'temps800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps800m')" placeholder="2:35:0"></td>
@@ -1524,7 +1529,12 @@
                         <td class="student-name">${escapeHtml(s.nom)}</td>
                         <td>${escapeHtml(s.prenom)}</td>
                         <td class="student-info">${escapeHtml(s.groupe)}</td>
-                        <td class="student-info">${s.sexe}</td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'sexe', this.value)">
+                                <option value="M" ${s.sexe === 'M' ? 'selected' : ''}>M</option>
+                                <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
+                            </select>
+                        </td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.projetHaies || '')}" onchange="updateStudent(${i}, 'projetHaies', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projetHaies')" placeholder="18.5"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.tempsHaies || '')}" onchange="updateStudent(${i}, 'tempsHaies', this.value)" onkeydown="handleKeyNav(event, ${i}, 'tempsHaies')" placeholder="19.2"></td>
                         <td>
@@ -1598,7 +1608,12 @@
                         <td class="student-name">${escapeHtml(s.nom)}</td>
                         <td>${escapeHtml(s.prenom)}</td>
                         <td class="student-info">${escapeHtml(s.groupe)}</td>
-                        <td class="student-info">${s.sexe}</td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'sexe', this.value)">
+                                <option value="M" ${s.sexe === 'M' ? 'selected' : ''}>M</option>
+                                <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
+                            </select>
+                        </td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.projetPentabond || '')}" onchange="updateStudent(${i}, 'projetPentabond', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projetPentabond')" placeholder="12.50"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.perfPentabond || '')}" onchange="updateStudent(${i}, 'perfPentabond', this.value)" onkeydown="handleKeyNav(event, ${i}, 'perfPentabond')" placeholder="12.75"></td>
                         <td class="calculated">${ecartProjet !== null ? (ecartProjet / 100).toFixed(2) : '-'}</td>
