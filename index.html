@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notation Athlétisme - EPS</title>
-    <meta name="description" content="Application de notation pour les épreuves d'athlétisme: 800m, 120m haies, Pentabond">
+    <meta name="description" content="Application de notation pour les épreuves d'athlétisme: 800m, 60m / relais 4x60m, Pentabond">
     <meta name="theme-color" content="#ff6b35">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -664,6 +664,215 @@
             cursor: pointer;
         }
 
+        /* Constitution des séries / équipes (glisser-déposer) */
+        .board-panel {
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+        }
+
+        .board-panel summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+
+        .board-hint {
+            font-weight: 500;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .board-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 0.75rem 0;
+        }
+
+        .board-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .board-col {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+        }
+
+        .board-col.pool {
+            border-style: dashed;
+        }
+
+        .board-col.full .board-col-count {
+            color: var(--success);
+        }
+
+        .board-col.over .board-list {
+            background: rgba(0, 212, 170, 0.08);
+        }
+
+        .board-col.refuse .board-list {
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .board-col-header {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .board-col-header input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: var(--text);
+            font: inherit;
+            padding: 0.15rem 0.3rem;
+        }
+
+        .board-col-header input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--background);
+        }
+
+        .board-col-count {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .board-col-header .delete-btn {
+            opacity: 0.6;
+        }
+
+        .board-list {
+            flex: 1;
+            list-style: none;
+            padding: 0.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-height: 60px;
+            border-radius: 0 0 10px 10px;
+            counter-reset: rang;
+        }
+
+        .board-card {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid #3b82f6;
+            border-radius: 6px;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.78rem;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            counter-increment: rang;
+        }
+
+        .board-card.sexe-F {
+            border-left-color: #ec4899;
+        }
+
+        .board-list.ordered .board-card::before {
+            content: counter(rang);
+            font-weight: 800;
+            color: var(--primary);
+            min-width: 1rem;
+            text-align: center;
+        }
+
+        .board-card.dragging {
+            opacity: 0.35;
+        }
+
+        .board-card.ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 5000;
+            opacity: 0.9;
+            box-shadow: var(--shadow);
+            transform: rotate(2deg);
+        }
+
+        .drag-handle {
+            touch-action: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0.2rem 0.15rem;
+            cursor: grab;
+        }
+
+        .board-card-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .board-card-info {
+            font-size: 0.7rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .board-card-grp {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .serie-row td {
+            background: var(--surface-light);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-align: left;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem 0;
+        }
+
+        .warn-cell {
+            color: var(--warning);
+            font-size: 0.7rem;
+        }
+
+        .table-input.small {
+            min-width: 50px;
+            width: 60px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header-content {
@@ -852,7 +1061,10 @@
             <button class="tab active" onclick="switchTab('800m', event)" type="button">
                 <span class="tab-icon">🏃</span> 800m
             </button>
-            <button class="tab" onclick="switchTab('haies', event)" type="button">
+            <button class="tab" onclick="switchTab('relais', event)" type="button">
+                <span class="tab-icon">🏃‍♀️</span> 4×60m
+            </button>
+            <button class="tab" id="tabBtn-haies" onclick="switchTab('haies', event)" type="button">
                 <span class="tab-icon">🏃‍♂️</span> Haies
             </button>
             <button class="tab" onclick="switchTab('pentabond', event)" type="button">
@@ -872,6 +1084,18 @@
                         Format: <kbd>2:37:2</kbd> ou <kbd>disp</kbd> | <kbd>Tab</kbd> <kbd>Entrée</kbd> pour naviguer
                     </div>
                 </div>
+                <details class="board-panel" id="panel-800m" open>
+                    <summary>🧩 Constitution des séries <span class="board-hint">(max 6 coureurs par série — glissez-déposez les élèves)</span></summary>
+                    <div class="board-toolbar">
+                        <label class="board-filter">Groupe :
+                            <select class="table-select" id="filter-800m" onchange="renderBoards()"></select>
+                        </label>
+                        <button class="btn btn-secondary" onclick="addGroupe('800m')" type="button">➕ Nouvelle série</button>
+                        <button class="btn btn-primary" onclick="autoRepartir800m()" type="button">⚡ Répartir par projet</button>
+                        <button class="btn btn-secondary" onclick="viderGroupes('800m')" type="button">♻️ Tout désaffecter</button>
+                    </div>
+                    <div class="board" id="board-800m"></div>
+                </details>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -880,6 +1104,7 @@
                                 <th>Prénom</th>
                                 <th>Grp</th>
                                 <th>Sexe</th>
+                                <th>Série</th>
                                 <th>Projet</th>
                                 <th>T. 400m</th>
                                 <th>T. 800m</th>
@@ -900,6 +1125,84 @@
                     <div class="empty-state-icon">🏃</div>
                     <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
                     <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 60m / Relais 4x60m Tab -->
+        <div class="tab-content" id="tab-relais">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏃‍♀️ 60m plat + Relais 4×60m (/20)</h2>
+                    <div class="card-hint">
+                        Format: <kbd>7.72</kbd> <kbd>7"72</kbd> ou <kbd>disp</kbd> | 60m /10 + relais /10
+                    </div>
+                </div>
+                <details class="board-panel" id="panel-relais" open>
+                    <summary>🧩 Constitution des équipes <span class="board-hint">(4 relayeurs, l'ordre = ordre de passage — glissez-déposez les élèves)</span></summary>
+                    <div class="board-toolbar">
+                        <label class="board-filter">Groupe :
+                            <select class="table-select" id="filter-relais" onchange="renderBoards()"></select>
+                        </label>
+                        <button class="btn btn-secondary" onclick="addGroupe('relais')" type="button">➕ Nouvelle équipe</button>
+                        <button class="btn btn-primary" onclick="autoRepartirRelais()" type="button">⚡ Équipes équilibrées (60m)</button>
+                        <button class="btn btn-secondary" onclick="viderGroupes('relais')" type="button">♻️ Tout désaffecter</button>
+                    </div>
+                    <div class="board" id="board-relais"></div>
+                </details>
+                <h3 class="section-title">⏱️ 60m individuel</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Grp</th>
+                                <th>Sexe</th>
+                                <th>Équipe</th>
+                                <th>T. 60m</th>
+                                <th>Note 60m</th>
+                                <th>Note relais</th>
+                                <th>NOTE /20</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-relais"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-relais">
+                    <div class="empty-state-icon">🏃‍♀️</div>
+                    <p>Aucun élève. Importez un fichier ou ajoutez manuellement.</p>
+                    <button class="btn btn-primary" onclick="openModal('addStudentModal')" type="button">➕ Ajouter un élève</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🤝 Relais 4×60m — équipes</h2>
+                    <div class="card-hint">
+                        Écart = Σ 60m − temps relais | Note = (écart − 0"60) / 0"10 | −2 pts par témoin tombé / hors zone
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Équipe</th>
+                                <th>Relayeurs (ordre)</th>
+                                <th>Σ 60m</th>
+                                <th>T. relais</th>
+                                <th>Écart</th>
+                                <th>Témoin tombé</th>
+                                <th>Hors zone</th>
+                                <th>Note /10</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-equipes"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-equipes">
+                    <div class="empty-state-icon">🤝</div>
+                    <p>Aucune équipe. Créez-en avec le panneau « Constitution des équipes ».</p>
                 </div>
             </div>
         </div>
@@ -1012,7 +1315,8 @@
                                 <th>Groupe</th>
                                 <th>Sexe</th>
                                 <th>800m</th>
-                                <th>Haies</th>
+                                <th>4×60m</th>
+                                <th class="col-haies">Haies</th>
                                 <th>Pentabond</th>
                                 <th>Moyenne</th>
                             </tr>
@@ -1170,14 +1474,32 @@
 
         const POINTS_DEPART = { 'start': 2, 'trepied': 1, 'debout': 0 };
 
+        // 60m plat (/10) : 10 − 0,5 par dixième entamé au-delà du temps de référence
+        const TREF_60M = { M: 7.25, F: 8.05 };
+        // Relais 4x60m (/10) : note = (écart − 0"60) / 0"10, −2 pts par incident
+        const RELAIS_ECART_MIN = 0.60;
+        const RELAIS_PENALITE = 2;
+
+        // Épreuves affichées (false = épreuve mise en sommeil : masquée, hors moyenne, données conservées)
+        const EPREUVES_ACTIVES = { haies: false };
+
+        // Taille maximale des séries / équipes
+        const MAX_SERIE_800M = 6;
+        const MAX_EQUIPE_RELAIS = 4;
+
         // ============ DATA ============
         let students = [];
         let currentTab = '800m';
+        // Séries 800m et équipes de relais : { id, nom, membres: [id élève, ...] }
+        let series800m = [];
+        let equipesRelais = [];   // + tempsRelais, temoinTombe, horsZone
 
         // ============ PERSISTANCE DES DONNÉES ============
         function sauvegarderDonnees() {
             try {
                 localStorage.setItem('athletisme_students', JSON.stringify(students));
+                localStorage.setItem('athletisme_series800m', JSON.stringify(series800m));
+                localStorage.setItem('athletisme_equipesRelais', JSON.stringify(equipesRelais));
                 localStorage.setItem('athletisme_lastSave', new Date().toISOString());
             } catch (e) {
                 console.error('Erreur sauvegarde:', e);
@@ -1191,16 +1513,41 @@
                     students = JSON.parse(data);
                     console.log(`✅ ${students.length} élève(s) chargé(s)`);
                 }
+                series800m = JSON.parse(localStorage.getItem('athletisme_series800m') || '[]');
+                equipesRelais = JSON.parse(localStorage.getItem('athletisme_equipesRelais') || '[]');
             } catch (e) {
                 console.error('Erreur chargement:', e);
                 students = [];
+                series800m = [];
+                equipesRelais = [];
             }
+            ensureStudentIds();
+            nettoyerGroupes();
+        }
+
+        // Identifiant stable par élève (les séries/équipes référencent les élèves par id)
+        function newId(prefix) {
+            return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        }
+
+        function ensureStudentIds() {
+            students.forEach(s => { if (!s.id) s.id = newId('s'); });
+        }
+
+        // Retire des séries/équipes les élèves qui n'existent plus
+        function nettoyerGroupes() {
+            const ids = new Set(students.map(s => s.id));
+            [series800m, equipesRelais].forEach(groupes => {
+                groupes.forEach(g => { g.membres = (g.membres || []).filter(id => ids.has(id)); });
+            });
         }
 
         function effacerToutesLesDonnees() {
             if (confirm('⚠️ ATTENTION : Voulez-vous vraiment effacer toutes les données ?\n\nCette action est irréversible et supprimera tous les élèves et leurs notes.')) {
                 localStorage.clear();
                 students = [];
+                series800m = [];
+                equipesRelais = [];
                 showToast('🗑️ Toutes les données ont été effacées');
                 renderCurrentTab();
             }
@@ -1299,6 +1646,33 @@
             return 0;
         }
 
+        // Temps de sprint en secondes : 7.72 / 7,72 / 7"72 / 7''72 / 7'72
+        function parseSprint(str) {
+            if (!str || str.toString().toLowerCase() === 'disp') return null;
+            const v = parseFloat(str.toString().trim().replace(/''|"|'|,/g, '.'));
+            return isNaN(v) ? null : v;
+        }
+
+        function formatSprint(seconds) {
+            return seconds === null || isNaN(seconds) ? '-' : seconds.toFixed(2);
+        }
+
+        function getNote60m(timeInSeconds, sexe) {
+            if (timeInSeconds === null) return null;
+            const tref = TREF_60M[sexe] || TREF_60M.M;
+            // Dixièmes entamés au-delà de Tref (arrondi au centième pour éviter les erreurs flottantes)
+            const dixiemes = Math.round((timeInSeconds - tref) * 1000) / 100;
+            const n = dixiemes > 0 ? Math.ceil(dixiemes) : 0;
+            return Math.max(0, 10 - 0.5 * n);
+        }
+
+        function getNoteRelais(ecartSeconds, nbIncidents) {
+            if (ecartSeconds === null) return null;
+            let note = Math.round((ecartSeconds - RELAIS_ECART_MIN) * 1000) / 100;
+            note = Math.min(10, Math.max(0, note));
+            return Math.max(0, note - RELAIS_PENALITE * (nbIncidents || 0));
+        }
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -1349,6 +1723,7 @@
         function renderCurrentTab() {
             switch(currentTab) {
                 case '800m': render800m(); break;
+                case 'relais': renderRelais(); break;
                 case 'haies': renderHaies(); break;
                 case 'pentabond': renderPentabond(); break;
                 case 'resultats': renderResultats(); break;
@@ -1356,6 +1731,7 @@
         }
 
         function updateStats() {
+            computeRelais();
             document.getElementById('totalStudents').textContent = students.length;
             document.getElementById('totalBoys').textContent = students.filter(s => s.sexe === 'M').length;
             document.getElementById('totalGirls').textContent = students.filter(s => s.sexe === 'F').length;
@@ -1374,20 +1750,21 @@
 
         function calculateAverage(student, mode) {
             const note800m = student.note800m;
-            const noteHaies = student.noteHaies;
+            const note4x60 = student.note4x60;
+            const noteHaies = EPREUVES_ACTIVES.haies ? student.noteHaies : null;
             const notePentabond = student.notePentabond;
             
             if (mode === '3') {
-                const notes = [note800m, noteHaies, notePentabond].filter(n => n !== null && n !== undefined);
+                const notes = [note800m, note4x60, noteHaies, notePentabond].filter(n => n !== null && n !== undefined);
                 if (notes.length === 0) return null;
                 return notes.reduce((a, b) => a + b, 0) / notes.length;
             } else {
                 if (notePentabond === null || notePentabond === undefined) {
-                    const courses = [note800m, noteHaies].filter(n => n !== null && n !== undefined);
+                    const courses = [note800m, note4x60, noteHaies].filter(n => n !== null && n !== undefined);
                     if (courses.length === 0) return null;
                     return Math.max(...courses);
                 }
-                const courses = [note800m, noteHaies].filter(n => n !== null && n !== undefined);
+                const courses = [note800m, note4x60, noteHaies].filter(n => n !== null && n !== undefined);
                 if (courses.length === 0) return notePentabond;
                 const meilleureCourse = Math.max(...courses);
                 return (notePentabond + meilleureCourse) / 2;
@@ -1421,8 +1798,26 @@
             
             empty.style.display = 'none';
             tbody.closest('.table-container').style.display = 'block';
+            renderBoard('800m');
             
-            tbody.innerHTML = students.map((s, i) => {
+            // Élèves regroupés par série (ordre du panneau), non affectés en fin de tableau
+            const serieDe = groupeParEleve(series800m);
+            const ordre = [];
+            series800m.forEach(g => g.membres.forEach(id => {
+                const i = students.findIndex(s => s.id === id);
+                if (i >= 0) ordre.push(i);
+            }));
+            students.forEach((s, i) => { if (!serieDe[s.id]) ordre.push(i); });
+            
+            let serieCourante;
+            tbody.innerHTML = ordre.map(i => {
+                const s = students[i];
+                const serie = serieDe[s.id];
+                let separateur = '';
+                if (series800m.length > 0 && serie !== serieCourante) {
+                    serieCourante = serie;
+                    separateur = `<tr class="serie-row"><td colspan="16">${serie ? '🏁 ' + escapeHtml(serie.nom) + ' (' + serie.membres.length + ')' : '⏳ Non affectés'}</td></tr>`;
+                }
                 const isDisp = s.temps800m && s.temps800m.toLowerCase() === 'disp';
                 const temps800m = parseTime(s.temps800m);
                 const temps400m = parseTime(s.temps400m);
@@ -1455,7 +1850,7 @@
                     students[i].note800m = null;
                 }
                 
-                return `
+                return separateur + `
                     <tr class="${isDisp ? 'disp-row' : ''}">
                         <td class="student-name">${escapeHtml(s.nom)}</td>
                         <td>${escapeHtml(s.prenom)}</td>
@@ -1466,6 +1861,7 @@
                                 <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
                             </select>
                         </td>
+                        <td class="student-info">${serie ? escapeHtml(serie.nom) : '-'}</td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.projet800m || '')}" onchange="updateStudent(${i}, 'projet800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projet800m')" placeholder="2:30:0"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.temps400m || '')}" onchange="updateStudent(${i}, 'temps400m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps400m')" placeholder="1:10:0"></td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.temps800m || '')}" onchange="updateStudent(${i}, 'temps800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps800m')" placeholder="2:35:0"></td>
@@ -1482,6 +1878,409 @@
             }).join('');
             
             updateStats();
+        }
+
+        // ============ 60M / RELAIS 4x60M ============
+        // Calcule note60m, noteRelais et note4x60 (/20) pour tous les élèves
+        function computeRelais() {
+            const equipeDe = groupeParEleve(equipesRelais);
+            const infosEquipe = {};
+            equipesRelais.forEach(e => { infosEquipe[e.id] = calculEquipe(e); });
+            students.forEach(s => {
+                const isDisp = s.temps60m && s.temps60m.toString().toLowerCase() === 'disp';
+                s.note60m = isDisp ? null : getNote60m(parseSprint(s.temps60m), s.sexe);
+                const equipe = equipeDe[s.id];
+                s.noteRelais = equipe ? infosEquipe[equipe.id].note : null;
+                s.note4x60 = (!isDisp && s.note60m !== null && s.noteRelais !== null) ? s.note60m + s.noteRelais : null;
+            });
+            return infosEquipe;
+        }
+
+        function calculEquipe(equipe) {
+            const membres = equipe.membres.map(id => students.find(s => s.id === id)).filter(Boolean);
+            const temps = membres.map(s => parseSprint(s.temps60m));
+            const tempsRelais = parseSprint(equipe.tempsRelais);
+            const res = { membres, somme: null, tempsRelais, ecart: null, note: null, alerte: '' };
+            if (membres.length !== MAX_EQUIPE_RELAIS) {
+                res.alerte = `Équipe incomplète (${membres.length}/${MAX_EQUIPE_RELAIS})`;
+                return res;
+            }
+            if (temps.some(t => t === null)) {
+                res.alerte = 'Temps 60m manquant(s)';
+                return res;
+            }
+            res.somme = temps.reduce((a, b) => a + b, 0);
+            if (tempsRelais === null) return res;
+            res.ecart = res.somme - tempsRelais;
+            res.note = getNoteRelais(res.ecart, (parseInt(equipe.temoinTombe) || 0) + (parseInt(equipe.horsZone) || 0));
+            return res;
+        }
+
+        function renderRelais() {
+            const tbody = document.getElementById('table-relais');
+            const empty = document.getElementById('empty-relais');
+            const infosEquipe = computeRelais();
+            renderBoard('relais');
+            renderEquipes(infosEquipe);
+
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+
+            // Élèves regroupés par équipe, dans l'ordre de passage
+            const equipeDe = groupeParEleve(equipesRelais);
+            const ordre = [];
+            equipesRelais.forEach(g => g.membres.forEach(id => {
+                const i = students.findIndex(s => s.id === id);
+                if (i >= 0) ordre.push(i);
+            }));
+            students.forEach((s, i) => { if (!equipeDe[s.id]) ordre.push(i); });
+
+            tbody.innerHTML = ordre.map(i => {
+                const s = students[i];
+                const equipe = equipeDe[s.id];
+                const isDisp = s.temps60m && s.temps60m.toString().toLowerCase() === 'disp';
+                return `
+                    <tr class="${isDisp ? 'disp-row' : ''}">
+                        <td class="student-name">${escapeHtml(s.nom)}</td>
+                        <td>${escapeHtml(s.prenom)}</td>
+                        <td class="student-info">${escapeHtml(s.groupe)}</td>
+                        <td>
+                            <select class="table-select" onchange="updateStudent(${i}, 'sexe', this.value)">
+                                <option value="M" ${s.sexe === 'M' ? 'selected' : ''}>M</option>
+                                <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
+                            </select>
+                        </td>
+                        <td class="student-info">${equipe ? escapeHtml(equipe.nom) : '-'}</td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps60m || '')}" onchange="updateStudent(${i}, 'temps60m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps60m')" placeholder="7.72"></td>
+                        <td class="calculated">${s.note60m !== null ? s.note60m.toFixed(1) : '-'}</td>
+                        <td class="calculated">${s.noteRelais !== null ? s.noteRelais.toFixed(1) : '-'}</td>
+                        <td class="note-cell">${isDisp ? 'DISP' : (s.note4x60 !== null ? s.note4x60.toFixed(1) : '-')}</td>
+                        <td><button class="delete-btn" onclick="deleteStudent(${i})" type="button" title="Supprimer">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateStats();
+        }
+
+        function renderEquipes(infosEquipe) {
+            const tbody = document.getElementById('table-equipes');
+            const empty = document.getElementById('empty-equipes');
+            if (equipesRelais.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                tbody.closest('.table-container').style.display = 'none';
+                return;
+            }
+            empty.style.display = 'none';
+            tbody.closest('.table-container').style.display = 'block';
+
+            tbody.innerHTML = equipesRelais.map(e => {
+                const info = infosEquipe[e.id];
+                const noms = info.membres.map((s, k) => `${k + 1}. ${escapeHtml(s.prenom)} ${escapeHtml(s.nom)}`).join('<br>');
+                return `
+                    <tr>
+                        <td class="student-name">${escapeHtml(e.nom)}</td>
+                        <td style="text-align:left; font-size:0.75rem;">${noms || '-'}${info.alerte ? `<div class="warn-cell">⚠️ ${info.alerte}</div>` : ''}</td>
+                        <td class="calculated">${formatSprint(info.somme)}</td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(e.tempsRelais || '')}" onchange="updateEquipe('${e.id}', 'tempsRelais', this.value)" placeholder="28.50"></td>
+                        <td class="calculated">${info.ecart !== null ? (info.ecart >= 0 ? '+' : '') + info.ecart.toFixed(2) : '-'}</td>
+                        <td><input type="number" min="0" class="table-input small" value="${parseInt(e.temoinTombe) || 0}" onchange="updateEquipe('${e.id}', 'temoinTombe', this.value)"></td>
+                        <td><input type="number" min="0" class="table-input small" value="${parseInt(e.horsZone) || 0}" onchange="updateEquipe('${e.id}', 'horsZone', this.value)"></td>
+                        <td class="note-cell">${info.note !== null ? info.note.toFixed(1) : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateEquipe(id, field, value) {
+            const e = equipesRelais.find(g => g.id === id);
+            if (!e) return;
+            e[field] = field === 'tempsRelais' ? value : Math.max(0, parseInt(value) || 0);
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        // ============ SÉRIES / ÉQUIPES (GLISSER-DÉPOSER) ============
+        const BOARDS = {
+            '800m': {
+                libelle: 'Série', max: MAX_SERIE_800M, ordered: false,
+                groupes: () => series800m,
+                info: s => s.projet800m ? '🎯 ' + escapeHtml(s.projet800m) : ''
+            },
+            'relais': {
+                libelle: 'Équipe', max: MAX_EQUIPE_RELAIS, ordered: true,
+                groupes: () => equipesRelais,
+                info: s => s.temps60m ? '⏱️ ' + escapeHtml(s.temps60m) : ''
+            }
+        };
+
+        // { idEleve: groupe } pour une liste de séries/équipes
+        function groupeParEleve(groupes) {
+            const map = {};
+            groupes.forEach(g => g.membres.forEach(id => { map[id] = g; }));
+            return map;
+        }
+
+        function filtreGroupe(key) {
+            const sel = document.getElementById('filter-' + key);
+            return sel ? sel.value : '';
+        }
+
+        function renderFiltre(key) {
+            const sel = document.getElementById('filter-' + key);
+            const courant = sel.value;
+            const groupes = [...new Set(students.map(s => s.groupe).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">Tous</option>' + groupes.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+            sel.value = groupes.includes(courant) ? courant : '';
+        }
+
+        function renderBoards() {
+            renderBoard('800m');
+            renderBoard('relais');
+        }
+
+        function renderBoard(key) {
+            const cfg = BOARDS[key];
+            const board = document.getElementById('board-' + key);
+            if (!board) return;
+            renderFiltre(key);
+            const filtre = filtreGroupe(key);
+            const byId = {};
+            students.forEach(s => { byId[s.id] = s; });
+            const dansFiltre = s => !filtre || s.groupe === filtre;
+            const affectes = groupeParEleve(cfg.groupes());
+
+            const carte = s => `
+                <li class="board-card sexe-${s.sexe}" data-id="${s.id}">
+                    <span class="drag-handle" title="Glisser">⠿</span>
+                    <span class="board-card-name">${escapeHtml(s.prenom)} ${escapeHtml(s.nom)} <span class="board-card-grp">${escapeHtml(s.groupe)}</span></span>
+                    <span class="board-card-info">${cfg.info(s)}</span>
+                </li>`;
+
+            const pool = students.filter(s => !affectes[s.id] && dansFiltre(s));
+            let html = `
+                <div class="board-col pool">
+                    <div class="board-col-header">⏳ Non affectés <span class="board-col-count">${pool.length}</span></div>
+                    <ul class="board-list" data-groupe="" data-max="0">${pool.map(carte).join('')}</ul>
+                </div>`;
+
+            // Une série est affichée si elle est vide ou contient au moins un élève du groupe filtré
+            cfg.groupes().forEach(g => {
+                const membres = g.membres.map(id => byId[id]).filter(Boolean);
+                if (filtre && membres.length > 0 && !membres.some(dansFiltre)) return;
+                const plein = membres.length >= cfg.max;
+                html += `
+                    <div class="board-col ${plein ? 'full' : ''}">
+                        <div class="board-col-header">
+                            <input type="text" value="${escapeHtml(g.nom)}" onchange="renommerGroupe('${key}', '${g.id}', this.value)" title="Renommer">
+                            <span class="board-col-count">${membres.length}/${cfg.max}</span>
+                            <button class="delete-btn" onclick="supprimerGroupe('${key}', '${g.id}')" type="button" title="Supprimer">✖</button>
+                        </div>
+                        <ul class="board-list ${cfg.ordered ? 'ordered' : ''}" data-groupe="${g.id}" data-max="${cfg.max}">${membres.map(carte).join('')}</ul>
+                    </div>`;
+            });
+            board.innerHTML = html;
+            board.dataset.key = key;
+        }
+
+        function addGroupe(key) {
+            const cfg = BOARDS[key];
+            const groupes = cfg.groupes();
+            const filtre = filtreGroupe(key);
+            const g = { id: newId('g'), nom: `${filtre ? filtre + ' - ' : ''}${cfg.libelle} ${groupes.length + 1}`, membres: [] };
+            if (key === 'relais') Object.assign(g, { tempsRelais: '', temoinTombe: 0, horsZone: 0 });
+            groupes.push(g);
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        function renommerGroupe(key, id, nom) {
+            const g = BOARDS[key].groupes().find(x => x.id === id);
+            if (g && nom.trim()) g.nom = nom.trim();
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        function supprimerGroupe(key, id) {
+            const groupes = BOARDS[key].groupes();
+            const i = groupes.findIndex(x => x.id === id);
+            if (i < 0) return;
+            if (groupes[i].membres.length > 0 && !confirm(`Supprimer « ${groupes[i].nom} » ? Ses élèves redeviendront non affectés.`)) return;
+            groupes.splice(i, 1);
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        // Désaffecte les élèves du groupe filtré et supprime les séries/équipes devenues vides
+        function retirerEleves(key, ids) {
+            const groupes = BOARDS[key].groupes();
+            groupes.forEach(g => { g.membres = g.membres.filter(id => !ids.has(id)); });
+            const restants = groupes.filter(g => g.membres.length > 0);
+            groupes.length = 0;
+            groupes.push(...restants);
+        }
+
+        function viderGroupes(key) {
+            const filtre = filtreGroupe(key);
+            if (!confirm(`Désaffecter tous les élèves${filtre ? ' du groupe ' + filtre : ''} ?`)) return;
+            retirerEleves(key, new Set(students.filter(s => !filtre || s.groupe === filtre).map(s => s.id)));
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        function confirmerRemplacement(key, eleves) {
+            const affectes = groupeParEleve(BOARDS[key].groupes());
+            return !eleves.some(s => affectes[s.id]) || confirm('Des élèves sont déjà affectés : la répartition actuelle (pour ce groupe) sera remplacée. Continuer ?');
+        }
+
+        // 800m : séries de niveau homogène, triées par projet (plus rapide en série 1), max 6 coureurs
+        function autoRepartir800m() {
+            const filtre = filtreGroupe('800m');
+            const eleves = students.filter(s => (!filtre || s.groupe === filtre) && !(s.temps800m && s.temps800m.toLowerCase() === 'disp'));
+            if (eleves.length === 0) { showToast('⚠️ Aucun élève à répartir', true); return; }
+            if (!confirmerRemplacement('800m', eleves)) return;
+
+            const projet = s => { const t = parseTime(s.projet800m); return t === null || isNaN(t) ? Infinity : t; };
+            const tries = [...eleves].sort((a, b) => projet(a) - projet(b));
+            const sansProjet = tries.filter(s => projet(s) === Infinity).length;
+
+            retirerEleves('800m', new Set(eleves.map(s => s.id)));
+            // Séries de tailles équilibrées : 14 élèves → 5 / 5 / 4
+            const nbSeries = Math.ceil(tries.length / MAX_SERIE_800M);
+            const base = Math.floor(tries.length / nbSeries);
+            const reste = tries.length % nbSeries;
+            let k = 0;
+            for (let n = 0; n < nbSeries; n++) {
+                const taille = base + (n < reste ? 1 : 0);
+                series800m.push({
+                    id: newId('g'),
+                    nom: `${filtre ? filtre + ' - ' : ''}Série ${n + 1}`,
+                    membres: tries.slice(k, k + taille).map(s => s.id)
+                });
+                k += taille;
+            }
+            sauvegarderDonnees();
+            renderCurrentTab();
+            showToast(`✅ ${nbSeries} série(s) créée(s)${sansProjet ? ` — ${sansProjet} élève(s) sans projet placé(s) en dernière série` : ''}`);
+        }
+
+        // Relais : équipes de 4 de niveau équivalent (répartition en serpentin selon le 60m)
+        function autoRepartirRelais() {
+            const filtre = filtreGroupe('relais');
+            const eleves = students.filter(s => (!filtre || s.groupe === filtre) && !(s.temps60m && s.temps60m.toString().toLowerCase() === 'disp'));
+            const nbEquipes = Math.floor(eleves.length / MAX_EQUIPE_RELAIS);
+            if (nbEquipes === 0) { showToast(`⚠️ Il faut au moins ${MAX_EQUIPE_RELAIS} élèves`, true); return; }
+            if (!confirmerRemplacement('relais', eleves)) return;
+
+            const temps = s => { const t = parseSprint(s.temps60m); return t === null ? Infinity : t; };
+            const tries = [...eleves].sort((a, b) => temps(a) - temps(b));
+            const sansTemps = tries.filter(s => temps(s) === Infinity).length;
+
+            retirerEleves('relais', new Set(eleves.map(s => s.id)));
+            const nouvelles = [];
+            for (let n = 0; n < nbEquipes; n++) {
+                nouvelles.push({ id: newId('g'), nom: `${filtre ? filtre + ' - ' : ''}Équipe ${n + 1}`, membres: [], tempsRelais: '', temoinTombe: 0, horsZone: 0 });
+            }
+            // Serpentin : 1→N puis N→1, etc. ; le surplus (< 4 élèves) reste non affecté
+            tries.slice(0, nbEquipes * MAX_EQUIPE_RELAIS).forEach((s, i) => {
+                const tour = Math.floor(i / nbEquipes);
+                const pos = i % nbEquipes;
+                nouvelles[tour % 2 === 0 ? pos : nbEquipes - 1 - pos].membres.push(s.id);
+            });
+            equipesRelais.push(...nouvelles);
+            sauvegarderDonnees();
+            renderCurrentTab();
+            const surplus = eleves.length - nbEquipes * MAX_EQUIPE_RELAIS;
+            let msg = `✅ ${nbEquipes} équipe(s) créée(s)`;
+            if (surplus) msg += ` — ${surplus} élève(s) non affecté(s)`;
+            if (sansTemps) msg += ` — ${sansTemps} sans temps 60m`;
+            showToast(msg);
+        }
+
+        // Moteur de glisser-déposer (souris, stylet et tactile via Pointer Events)
+        // Au doigt, on saisit la poignée ⠿ pour ne pas bloquer le défilement de la page.
+        const drag = { carte: null, ghost: null, startX: 0, startY: 0, actif: false, origine: null, board: null };
+
+        document.addEventListener('pointerdown', e => {
+            const carte = e.target.closest('.board-card');
+            if (!carte || carte.classList.contains('ghost')) return;
+            if (e.pointerType === 'touch' && !e.target.closest('.drag-handle')) return;
+            if (e.button !== undefined && e.button !== 0) return;
+            Object.assign(drag, { carte, startX: e.clientX, startY: e.clientY, actif: false, origine: carte.parentElement, board: carte.closest('.board') });
+            if (e.pointerType === 'touch') e.preventDefault();
+        });
+
+        document.addEventListener('pointermove', e => {
+            if (!drag.carte) return;
+            if (!drag.actif) {
+                if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 6) return;
+                drag.actif = true;
+                const r = drag.carte.getBoundingClientRect();
+                drag.ghost = drag.carte.cloneNode(true);
+                drag.ghost.classList.add('ghost');
+                drag.ghost.style.width = r.width + 'px';
+                drag.offsetX = drag.startX - r.left;
+                drag.offsetY = drag.startY - r.top;
+                document.body.appendChild(drag.ghost);
+                drag.carte.classList.add('dragging');
+            }
+            e.preventDefault();
+            drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
+            drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
+
+            // Défilement automatique près des bords de la fenêtre
+            if (e.clientY < 60) window.scrollBy(0, -12);
+            else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+
+            drag.board.querySelectorAll('.board-col').forEach(c => c.classList.remove('over', 'refuse'));
+            const cible = document.elementFromPoint(e.clientX, e.clientY);
+            const col = cible && cible.closest('.board-col');
+            if (!col || col.closest('.board') !== drag.board) return;
+            const liste = col.querySelector('.board-list');
+            const max = parseInt(liste.dataset.max) || 0;
+            const autres = [...liste.children].filter(c => c !== drag.carte);
+            if (liste !== drag.carte.parentElement && max > 0 && autres.length >= max) {
+                col.classList.add('refuse');
+                return;
+            }
+            col.classList.add('over');
+            const avant = autres.find(c => {
+                const r = c.getBoundingClientRect();
+                return e.clientY < r.top + r.height / 2;
+            });
+            if (avant) liste.insertBefore(drag.carte, avant);
+            else liste.appendChild(drag.carte);
+        }, { passive: false });
+
+        function finDrag() {
+            if (!drag.carte) return;
+            const { actif, board } = drag;
+            if (drag.ghost) drag.ghost.remove();
+            drag.carte.classList.remove('dragging');
+            board.querySelectorAll('.board-col').forEach(c => c.classList.remove('over', 'refuse'));
+            drag.carte = null;
+            drag.ghost = null;
+            if (actif) appliquerBoard(board);
+        }
+        document.addEventListener('pointerup', finDrag);
+        document.addEventListener('pointercancel', finDrag);
+
+        // Relit l'ordre des cartes dans le DOM et met à jour les séries/équipes affichées
+        function appliquerBoard(board) {
+            const groupes = BOARDS[board.dataset.key].groupes();
+            board.querySelectorAll('.board-list[data-groupe]').forEach(liste => {
+                const g = groupes.find(x => x.id === liste.dataset.groupe);
+                if (g) g.membres = [...liste.children].map(c => c.dataset.id);
+            });
+            sauvegarderDonnees();
+            renderCurrentTab();
         }
 
         function renderHaies() {
@@ -1719,6 +2518,7 @@
                     students[i].notePentabond = null;
                 }
             });
+            computeRelais();
             
             if (students.length === 0) {
                 tbody.innerHTML = '';
@@ -1741,7 +2541,8 @@
                         <td class="student-info">${escapeHtml(s.groupe)}</td>
                         <td class="student-info">${s.sexe}</td>
                         <td class="${s.note800m !== null ? 'calculated' : ''}" style="${s.note800m === null ? 'opacity: 0.5;' : ''}">${s.note800m !== null ? s.note800m.toFixed(1) : 'DISP'}</td>
-                        <td class="${s.noteHaies !== null ? 'calculated' : ''}" style="${s.noteHaies === null ? 'opacity: 0.5;' : ''}">${s.noteHaies !== null ? s.noteHaies.toFixed(1) : 'DISP'}</td>
+                        <td class="${s.note4x60 !== null ? 'calculated' : ''}" style="${s.note4x60 === null ? 'opacity: 0.5;' : ''}">${s.note4x60 !== null ? s.note4x60.toFixed(1) : 'DISP'}</td>
+                        ${EPREUVES_ACTIVES.haies ? `<td class="${s.noteHaies !== null ? 'calculated' : ''}" style="${s.noteHaies === null ? 'opacity: 0.5;' : ''}">${s.noteHaies !== null ? s.noteHaies.toFixed(1) : 'DISP'}</td>` : ''}
                         <td class="${s.notePentabond !== null ? 'calculated' : ''}" style="${s.notePentabond === null ? 'opacity: 0.5;' : ''}">${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'}</td>
                         <td class="note-cell">${avg !== null ? avg.toFixed(2) : '-'}</td>
                     </tr>
@@ -1752,7 +2553,7 @@
         }
 
         function updateAllResults() {
-            render800m(); renderHaies(); renderPentabond(); renderResultats();
+            render800m(); renderRelais(); renderHaies(); renderPentabond(); renderResultats();
         }
 
         // ============ STUDENT MANAGEMENT ============
@@ -1765,11 +2566,13 @@
             event.preventDefault();
             
             const student = {
+                id: newId('s'),
                 nom: document.getElementById('newNom').value.trim(),
                 prenom: document.getElementById('newPrenom').value.trim(),
                 groupe: document.getElementById('newGroupe').value.trim(),
                 sexe: document.getElementById('newSexe').value,
                 projet800m: '', temps400m: '', temps800m: '', note800m: null,
+                temps60m: '', note60m: null, noteRelais: null, note4x60: null,
                 projetHaies: '', tempsHaies: '', typeDepart: '', noteHaies: null,
                 projetPentabond: '', perfPentabond: '', elan: '', premierSaut: '', equilibre: '', notePentabond: null
             };
@@ -1797,6 +2600,7 @@
             const student = students[index];
             if (confirm(`Supprimer ${student.prenom} ${student.nom} ?`)) {
                 students.splice(index, 1);
+                nettoyerGroupes();
                 sauvegarderDonnees();
                 showToast(`🗑️ Élève supprimé`);
                 renderCurrentTab();
@@ -1845,6 +2649,10 @@
             const elanIdx     = hn.findIndex(h => h === 'elan');
             const sautIdx     = hn.findIndex(h => h === 'premiersaut' || (h.includes('premier') && h.includes('saut')));
             const equilibreIdx= hn.findIndex(h => h === 'equilibre');
+            // Colonnes 60m / relais / séries
+            const t60mIdx     = hn.findIndex(h => h === 'temps60m' || h === '60m' || (h.includes('60') && h.includes('temps') && !h.includes('relais')));
+            const equipeIdx   = hn.findIndex(h => h === 'equipe' || h === 'equiperelais');
+            const serieIdx    = hn.findIndex(h => h === 'serie' || h === 'serie800m');
 
             let count = 0;
 
@@ -1885,18 +2693,37 @@
                 else equilibre = '';
 
                 const student = {
+                    id: newId('s'),
                     nom, prenom, groupe, sexe,
                     projet800m: get(p800mIdx), temps400m: get(t400mIdx), temps800m: get(t800mIdx), note800m: null,
+                    temps60m: get(t60mIdx), note60m: null, noteRelais: null, note4x60: null,
                     projetHaies: get(pHaiesIdx), tempsHaies: get(tHaiesIdx), typeDepart, noteHaies: null,
                     projetPentabond: get(pPentaIdx), perfPentabond: get(perfPentaIdx), elan, premierSaut, equilibre, notePentabond: null
                 };
 
-                if (student.nom || student.prenom) { students.push(student); count++; }
+                if (student.nom || student.prenom) {
+                    students.push(student);
+                    affecterParNom(series800m, get(serieIdx), student.id, {});
+                    affecterParNom(equipesRelais, get(equipeIdx), student.id, { tempsRelais: '', temoinTombe: 0, horsZone: 0 });
+                    count++;
+                }
             }
 
             sauvegarderDonnees();
             renderCurrentTab();
             return count;
+        }
+
+        // Import : place l'élève dans la série/équipe nommée (créée si besoin)
+        function affecterParNom(groupes, nom, id, defauts) {
+            nom = (nom || '').trim();
+            if (!nom) return;
+            let g = groupes.find(x => x.nom.toLowerCase() === nom.toLowerCase());
+            if (!g) {
+                g = Object.assign({ id: newId('g'), nom, membres: [] }, defauts);
+                groupes.push(g);
+            }
+            g.membres.push(id);
         }
 
         function importExcel(event) {
@@ -1976,12 +2803,20 @@
             renderResultats();
             const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
             
-            let csv = 'Nom;Prénom;Groupe;Sexe;Note 800m;Note Haies;Note Pentabond;Moyenne\n';
+            const serieDe = groupeParEleve(series800m);
+            const equipeDe = groupeParEleve(equipesRelais);
+            const fmt = n => n !== null && n !== undefined ? n.toFixed(1) : 'DISP';
+            let csv = 'Nom;Prénom;Groupe;Sexe;Série 800m;Note 800m;Équipe;Temps 60m;Note 60m;Note relais;Note 4x60m;';
+            if (EPREUVES_ACTIVES.haies) csv += 'Note Haies;';
+            csv += 'Note Pentabond;Moyenne\n';
             students.forEach(s => {
                 const avg = calculateAverage(s, avgMode);
                 csv += `${s.nom};${s.prenom};${s.groupe};${s.sexe};`;
-                csv += `${s.note800m !== null ? s.note800m.toFixed(1) : 'DISP'};`;
-                csv += `${s.noteHaies !== null ? s.noteHaies.toFixed(1) : 'DISP'};`;
+                csv += `${serieDe[s.id] ? serieDe[s.id].nom : ''};`;
+                csv += `${fmt(s.note800m)};`;
+                csv += `${equipeDe[s.id] ? equipeDe[s.id].nom : ''};${s.temps60m || ''};`;
+                csv += `${fmt(s.note60m)};${fmt(s.noteRelais)};${fmt(s.note4x60)};`;
+                if (EPREUVES_ACTIVES.haies) csv += `${fmt(s.noteHaies)};`;
                 csv += `${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'};`;
                 csv += `${avg !== null ? avg.toFixed(2) : ''}\n`;
             });
@@ -2039,6 +2874,12 @@
         }
 
         // ============ CHARGEMENT INITIAL ============
+        // Épreuves mises en sommeil : onglet et colonne masqués
+        if (!EPREUVES_ACTIVES.haies) {
+            document.getElementById('tabBtn-haies').style.display = 'none';
+            document.querySelectorAll('.col-haies').forEach(el => el.style.display = 'none');
+        }
+
         chargerDonnees();
         render800m();
     </script>
