@@ -1084,6 +1084,12 @@
                         Format: <kbd>2:37:2</kbd> ou <kbd>disp</kbd> | <kbd>Tab</kbd> <kbd>Entrée</kbd> pour naviguer
                     </div>
                 </div>
+                <div class="board-panel">
+                    <label class="radio-option" title="Les filles courent un 600m (barème 600m filles)">
+                        <input type="checkbox" id="option600mFilles" onchange="setOption600m(this.checked)">
+                        <span>👧 Filles sur 600m</span>
+                    </label>
+                </div>
                 <details class="board-panel" id="panel-800m" open>
                     <summary>🧩 Constitution des séries <span class="board-hint">(max 6 coureurs par série — glissez-déposez les élèves)</span></summary>
                     <div class="board-toolbar">
@@ -1106,9 +1112,9 @@
                                 <th>Sexe</th>
                                 <th>Série</th>
                                 <th>Projet</th>
-                                <th>T. 400m</th>
-                                <th>T. 800m</th>
-                                <th>2e 400m</th>
+                                <th id="th-inter">T. 400m</th>
+                                <th id="th-temps800">T. 800m</th>
+                                <th id="th-2e">2e 400m</th>
                                 <th>Éc. tours</th>
                                 <th>Pts</th>
                                 <th>Éc. projet</th>
@@ -1312,7 +1318,7 @@
                                 <th>Prénom</th>
                                 <th>Groupe</th>
                                 <th>Sexe</th>
-                                <th>800m</th>
+                                <th id="th-res800">800m</th>
                                 <th>4×60m</th>
                                 <th class="col-haies">Haies</th>
                                 <th>Pentabond</th>
@@ -1459,6 +1465,24 @@
             { ecart: 999, points: 0 }
         ];
 
+        // 600m filles (option « Filles sur 600m ») : barème de performance
+        const BAREME_600M_F = [
+            { time: 118, points: 14 }, { time: 123, points: 13.5 }, { time: 127, points: 13 },
+            { time: 132, points: 12.5 }, { time: 136, points: 12 }, { time: 141, points: 11 },
+            { time: 146, points: 10 }, { time: 150, points: 9 }, { time: 155, points: 8 },
+            { time: 159, points: 7.5 }, { time: 164, points: 7 }, { time: 169, points: 6.5 },
+            { time: 173, points: 6 }, { time: 178, points: 5.5 }, { time: 182, points: 5 },
+            { time: 187, points: 4.5 }, { time: 192, points: 4 }, { time: 196, points: 3.5 },
+            { time: 201, points: 3 }, { time: 205, points: 2.5 }, { time: 210, points: 2 },
+            { time: 215, points: 1.5 }, { time: 220, points: 1 }, { time: 225, points: 0.5 }
+        ];
+
+        // 600m : écart entre le 1er et le 2nd 300m (au-delà de 30" → −1)
+        const ECART_TOURS_600M = [
+            { ecart: 10, points: 3 }, { ecart: 15, points: 2 }, { ecart: 20, points: 1 },
+            { ecart: 30, points: 0 }, { ecart: 150, points: -1 }
+        ];
+
         const ECART_TOURS_800M = [
             { ecart: 10, points: 3 }, { ecart: 15, points: 2 }, { ecart: 20, points: 1 },
             { ecart: 35, points: 0 }, { ecart: 150, points: -1 }
@@ -1498,6 +1522,7 @@
                 localStorage.setItem('athletisme_students', JSON.stringify(students));
                 localStorage.setItem('athletisme_series800m', JSON.stringify(series800m));
                 localStorage.setItem('athletisme_equipesRelais', JSON.stringify(equipesRelais));
+                localStorage.setItem('athletisme_options', JSON.stringify({ option600mFilles }));
                 localStorage.setItem('athletisme_lastSave', new Date().toISOString());
             } catch (e) {
                 console.error('Erreur sauvegarde:', e);
@@ -1513,6 +1538,7 @@
                 }
                 series800m = JSON.parse(localStorage.getItem('athletisme_series800m') || '[]');
                 equipesRelais = JSON.parse(localStorage.getItem('athletisme_equipesRelais') || '[]');
+                option600mFilles = !!JSON.parse(localStorage.getItem('athletisme_options') || '{}').option600mFilles;
             } catch (e) {
                 console.error('Erreur chargement:', e);
                 students = [];
@@ -1544,6 +1570,8 @@
         function effacerToutesLesDonnees() {
             if (confirm('⚠️ ATTENTION : Voulez-vous vraiment effacer toutes les données ?\n\nCette action est irréversible et supprimera tous les élèves et leurs notes.')) {
                 localStorage.clear();
+                option600mFilles = false;
+                majLibelles800m();
                 students = [];
                 series800m = [];
                 equipesRelais = [];
@@ -1584,9 +1612,31 @@
             return `${wholeSecs}:${tenths}`;
         }
 
-        function getNote800m(timeInSeconds, sexe) {
+        // Option « Filles sur 600m » (décochée par défaut)
+        let option600mFilles = false;
+
+        function est600m(student) {
+            return option600mFilles && student.sexe === 'F';
+        }
+
+        function setOption600m(actif) {
+            option600mFilles = actif;
+            sauvegarderDonnees();
+            majLibelles800m();
+            renderCurrentTab();
+        }
+
+        function majLibelles800m() {
+            document.getElementById('option600mFilles').checked = option600mFilles;
+            document.getElementById('th-inter').textContent = option600mFilles ? 'T. 400m / 300m F' : 'T. 400m';
+            document.getElementById('th-2e').textContent = option600mFilles ? '2e 400m / 300m F' : '2e 400m';
+            document.getElementById('th-temps800').textContent = option600mFilles ? 'T. 800m / 600m F' : 'T. 800m';
+            document.getElementById('th-res800').textContent = option600mFilles ? '800m / 600m F' : '800m';
+        }
+
+        function getNote800m(timeInSeconds, sexe, is600m = false) {
             if (timeInSeconds === null) return null;
-            const bareme = BAREME_800M[sexe] || BAREME_800M.M;
+            const bareme = is600m ? BAREME_600M_F : (BAREME_800M[sexe] || BAREME_800M.M);
             for (let i = 0; i < bareme.length; i++) {
                 if (timeInSeconds <= bareme[i].time) return bareme[i].points;
             }
@@ -1629,10 +1679,11 @@
             return 0;
         }
 
-        function getNoteEcartTours(ecartSeconds) {
+        function getNoteEcartTours(ecartSeconds, is600m = false) {
             if (ecartSeconds === null) return null;
-            for (let i = 0; i < ECART_TOURS_800M.length; i++) {
-                if (ecartSeconds <= ECART_TOURS_800M[i].ecart) return ECART_TOURS_800M[i].points;
+            const bareme = is600m ? ECART_TOURS_600M : ECART_TOURS_800M;
+            for (let i = 0; i < bareme.length; i++) {
+                if (ecartSeconds <= bareme[i].ecart) return bareme[i].points;
             }
             return 0;
         }
@@ -1829,7 +1880,7 @@
                     temps2e400m = temps800m - temps400m;
                     if (temps2e400m >= 0) {
                         ecartTours = Math.abs(temps400m - temps2e400m);
-                        noteEcartTours = getNoteEcartTours(ecartTours);
+                        noteEcartTours = getNoteEcartTours(ecartTours, est600m(s));
                     }
                 }
                 
@@ -1839,7 +1890,7 @@
                 }
                 
                 if (!isDisp && temps800m !== null) {
-                    notePerf = getNote800m(temps800m, s.sexe);
+                    notePerf = getNote800m(temps800m, s.sexe, est600m(s));
                 }
                 
                 if (notePerf !== null) {
@@ -1862,8 +1913,8 @@
                         </td>
                         <td class="student-info">${serie ? escapeHtml(serie.nom) : '-'}</td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.projet800m || '')}" onchange="updateStudent(${i}, 'projet800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'projet800m')" placeholder="2:30:0"></td>
-                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps400m || '')}" onchange="updateStudent(${i}, 'temps400m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps400m')" placeholder="1:10:0"></td>
-                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps800m || '')}" onchange="updateStudent(${i}, 'temps800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps800m')" placeholder="2:35:0"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps400m || '')}" onchange="updateStudent(${i}, 'temps400m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps400m')" placeholder="${est600m(s) ? '1:05:0' : '1:10:0'}"></td>
+                        <td><input type="text" class="table-input" value="${escapeHtml(s.temps800m || '')}" onchange="updateStudent(${i}, 'temps800m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps800m')" placeholder="${est600m(s) ? '2:15:0' : '2:35:0'}"></td>
                         <td class="calculated">${formatTime(temps2e400m)}</td>
                         <td class="calculated">${ecartTours !== null ? ecartTours.toFixed(1) : '-'}</td>
                         <td class="calculated">${noteEcartTours !== null ? noteEcartTours : '-'}</td>
@@ -2194,24 +2245,34 @@
             if (!confirmerRemplacement('800m', eleves)) return;
 
             const projet = s => { const t = parseTime(s.projet800m); return t === null || isNaN(t) ? Infinity : t; };
-            const tries = [...eleves].sort((a, b) => projet(a) - projet(b));
-            const sansProjet = tries.filter(s => projet(s) === Infinity).length;
+            const sansProjet = eleves.filter(s => projet(s) === Infinity).length;
 
             retirerEleves('800m', new Set(eleves.map(s => s.id)));
-            // Séries de tailles équilibrées : 14 élèves → 5 / 5 / 4
-            const nbSeries = Math.ceil(tries.length / MAX_SERIE_800M);
-            const base = Math.floor(tries.length / nbSeries);
-            const reste = tries.length % nbSeries;
-            let k = 0;
-            for (let n = 0; n < nbSeries; n++) {
-                const taille = base + (n < reste ? 1 : 0);
-                series800m.push({
-                    id: newId('g'),
-                    nom: `${filtre ? filtre + ' - ' : ''}Série ${n + 1}`,
-                    membres: tries.slice(k, k + taille).map(s => s.id)
-                });
-                k += taille;
-            }
+            // Filles sur 600m : séries séparées (distances différentes)
+            const courses = [
+                { eleves: eleves.filter(s => !est600m(s)), suffixe: '' },
+                { eleves: eleves.filter(s => est600m(s)), suffixe: ' (600m F)' }
+            ];
+            let nbSeries = 0;
+            courses.forEach(c => {
+                if (c.eleves.length === 0) return;
+                const tries = [...c.eleves].sort((a, b) => projet(a) - projet(b));
+                // Séries de tailles équilibrées : 14 élèves → 5 / 5 / 4
+                const nb = Math.ceil(tries.length / MAX_SERIE_800M);
+                const base = Math.floor(tries.length / nb);
+                const reste = tries.length % nb;
+                let k = 0;
+                for (let n = 0; n < nb; n++) {
+                    const taille = base + (n < reste ? 1 : 0);
+                    nbSeries++;
+                    series800m.push({
+                        id: newId('g'),
+                        nom: `${filtre ? filtre + ' - ' : ''}Série ${nbSeries}${c.suffixe}`,
+                        membres: tries.slice(k, k + taille).map(s => s.id)
+                    });
+                    k += taille;
+                }
+            });
             sauvegarderDonnees();
             renderCurrentTab();
             showToast(`✅ ${nbSeries} série(s) créée(s)${sansProjet ? ` — ${sansProjet} élève(s) sans projet placé(s) en dernière série` : ''}`);
@@ -2512,13 +2573,13 @@
                 const projet800m = parseTime(s.projet800m);
                 
                 if (!isDisp800m && temps800m !== null) {
-                    let notePerf = getNote800m(temps800m, s.sexe);
+                    let notePerf = getNote800m(temps800m, s.sexe, est600m(s));
                     let noteEcartTours = 0, noteEcartProjet = 0;
                     
                     if (temps400m !== null) {
                         const temps2e400m = temps800m - temps400m;
                         if (temps2e400m >= 0) {
-                            noteEcartTours = getNoteEcartTours(Math.abs(temps400m - temps2e400m)) || 0;
+                            noteEcartTours = getNoteEcartTours(Math.abs(temps400m - temps2e400m), est600m(s)) || 0;
                         }
                     }
                     if (projet800m !== null) {
@@ -2856,13 +2917,13 @@
             const serieDe = groupeParEleve(series800m);
             const equipeDe = groupeParEleve(equipesRelais);
             const fmt = n => n !== null && n !== undefined ? n.toFixed(1) : 'DISP';
-            let csv = 'Nom;Prénom;Groupe;Sexe;Série 800m;Note 800m;Équipe;Temps 60m;Note 60m;Note relais;Note 4x60m;';
+            let csv = 'Nom;Prénom;Groupe;Sexe;Série 800m;Course;Note 800m/600m;Équipe;Temps 60m;Note 60m;Note relais;Note 4x60m;';
             if (EPREUVES_ACTIVES.haies) csv += 'Note Haies;';
             csv += 'Note Pentabond;Moyenne\n';
             students.forEach(s => {
                 const avg = calculateAverage(s, avgMode);
                 csv += `${s.nom};${s.prenom};${s.groupe};${s.sexe};`;
-                csv += `${serieDe[s.id] ? serieDe[s.id].nom : ''};`;
+                csv += `${serieDe[s.id] ? serieDe[s.id].nom : ''};${est600m(s) ? '600m' : '800m'};`;
                 csv += `${fmt(s.note800m)};`;
                 csv += `${equipeDe[s.id] ? equipeDe[s.id].numero : ''};${s.temps60m || ''};`;
                 csv += `${fmt(s.note60m)};${fmt(s.noteRelais)};${fmt(s.note4x60)};`;
@@ -2931,6 +2992,7 @@
         }
 
         chargerDonnees();
+        majLibelles800m();
         render800m();
     </script>
 </body>
