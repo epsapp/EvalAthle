@@ -1138,18 +1138,16 @@
                         Format: <kbd>7.72</kbd> <kbd>7"72</kbd> ou <kbd>disp</kbd> | 60m /10 + relais /10
                     </div>
                 </div>
-                <details class="board-panel" id="panel-relais" open>
-                    <summary>🧩 Constitution des équipes <span class="board-hint">(4 relayeurs, l'ordre = ordre de passage — glissez-déposez les élèves)</span></summary>
+                <div class="board-panel">
+                    <div class="board-hint">🧩 Équipes : saisissez le numéro d'équipe à côté de chaque élève (4 relayeurs par équipe).</div>
                     <div class="board-toolbar">
                         <label class="board-filter">Groupe :
-                            <select class="table-select" id="filter-relais" onchange="renderBoards()"></select>
+                            <select class="table-select" id="filter-relais" onchange="renderRelais()"></select>
                         </label>
-                        <button class="btn btn-secondary" onclick="addGroupe('relais')" type="button">➕ Nouvelle équipe</button>
                         <button class="btn btn-primary" onclick="autoRepartirRelais()" type="button">⚡ Équipes équilibrées (60m)</button>
-                        <button class="btn btn-secondary" onclick="viderGroupes('relais')" type="button">♻️ Tout désaffecter</button>
+                        <button class="btn btn-secondary" onclick="viderGroupes('relais')" type="button">♻️ Effacer les numéros</button>
                     </div>
-                    <div class="board" id="board-relais"></div>
-                </details>
+                </div>
                 <h3 class="section-title">⏱️ 60m individuel</h3>
                 <div class="table-container">
                     <table>
@@ -1157,9 +1155,9 @@
                             <tr>
                                 <th>Nom</th>
                                 <th>Prénom</th>
+                                <th>N° équipe</th>
                                 <th>Grp</th>
                                 <th>Sexe</th>
-                                <th>Équipe</th>
                                 <th>T. 60m</th>
                                 <th>Note 60m</th>
                                 <th>Note relais</th>
@@ -1523,6 +1521,7 @@
             }
             ensureStudentIds();
             nettoyerGroupes();
+            numeroterEquipes();
         }
 
         // Identifiant stable par élève (les séries/équipes référencent les élèves par id)
@@ -1902,7 +1901,9 @@
             const tempsRelais = parseSprint(equipe.tempsRelais);
             const res = { membres, somme: null, tempsRelais, ecart: null, note: null, alerte: '' };
             if (membres.length !== MAX_EQUIPE_RELAIS) {
-                res.alerte = `Équipe incomplète (${membres.length}/${MAX_EQUIPE_RELAIS})`;
+                res.alerte = membres.length > MAX_EQUIPE_RELAIS
+                    ? `Trop d'élèves (${membres.length}/${MAX_EQUIPE_RELAIS})`
+                    : `Équipe incomplète (${membres.length}/${MAX_EQUIPE_RELAIS})`;
                 return res;
             }
             if (temps.some(t => t === null)) {
@@ -1920,7 +1921,7 @@
             const tbody = document.getElementById('table-relais');
             const empty = document.getElementById('empty-relais');
             const infosEquipe = computeRelais();
-            renderBoard('relais');
+            renderFiltre('relais');
             renderEquipes(infosEquipe);
 
             if (students.length === 0) {
@@ -1932,14 +1933,10 @@
             empty.style.display = 'none';
             tbody.closest('.table-container').style.display = 'block';
 
-            // Élèves regroupés par équipe, dans l'ordre de passage
+            // Ordre de la liste conservé (pas de réordonnancement pendant la saisie des numéros)
             const equipeDe = groupeParEleve(equipesRelais);
-            const ordre = [];
-            equipesRelais.forEach(g => g.membres.forEach(id => {
-                const i = students.findIndex(s => s.id === id);
-                if (i >= 0) ordre.push(i);
-            }));
-            students.forEach((s, i) => { if (!equipeDe[s.id]) ordre.push(i); });
+            const filtre = filtreGroupe('relais');
+            const ordre = students.map((s, i) => i).filter(i => !filtre || students[i].groupe === filtre);
 
             tbody.innerHTML = ordre.map(i => {
                 const s = students[i];
@@ -1949,6 +1946,7 @@
                     <tr class="${isDisp ? 'disp-row' : ''}">
                         <td class="student-name">${escapeHtml(s.nom)}</td>
                         <td>${escapeHtml(s.prenom)}</td>
+                        <td><input type="text" inputmode="numeric" class="table-input small" value="${equipe ? escapeHtml(equipe.numero) : ''}" onchange="setEquipeEleve(${i}, this.value)" onkeydown="handleKeyNav(event, ${i}, 'equipe')" placeholder="n°"></td>
                         <td class="student-info">${escapeHtml(s.groupe)}</td>
                         <td>
                             <select class="table-select" onchange="updateStudent(${i}, 'sexe', this.value)">
@@ -1956,7 +1954,6 @@
                                 <option value="F" ${s.sexe === 'F' ? 'selected' : ''}>F</option>
                             </select>
                         </td>
-                        <td class="student-info">${equipe ? escapeHtml(equipe.nom) : '-'}</td>
                         <td><input type="text" class="table-input" value="${escapeHtml(s.temps60m || '')}" onchange="updateStudent(${i}, 'temps60m', this.value)" onkeydown="handleKeyNav(event, ${i}, 'temps60m')" placeholder="7.72"></td>
                         <td class="calculated">${s.note60m !== null ? s.note60m.toFixed(1) : '-'}</td>
                         <td class="calculated">${s.noteRelais !== null ? s.noteRelais.toFixed(1) : '-'}</td>
@@ -1981,7 +1978,7 @@
             empty.style.display = 'none';
             tbody.closest('.table-container').style.display = 'block';
 
-            tbody.innerHTML = equipesRelais.map(e => {
+            tbody.innerHTML = [...equipesRelais].sort(compareEquipes).map(e => {
                 const info = infosEquipe[e.id];
                 const noms = info.membres.map((s, k) => `${k + 1}. ${escapeHtml(s.prenom)} ${escapeHtml(s.nom)}`).join('<br>');
                 return `
@@ -1997,6 +1994,55 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Équipes de relais identifiées par un numéro saisi à côté du nom de l'élève
+        function compareEquipes(a, b) {
+            return String(a.numero).localeCompare(String(b.numero), 'fr', { numeric: true });
+        }
+
+        function affecterEquipe(id, numero) {
+            numero = (numero || '').toString().trim();
+            equipesRelais.forEach(g => { g.membres = g.membres.filter(m => m !== id); });
+            if (numero) {
+                let g = equipesRelais.find(x => String(x.numero).toLowerCase() === numero.toLowerCase());
+                if (!g) {
+                    g = { id: newId('g'), numero, nom: 'Équipe ' + numero, membres: [], tempsRelais: '', temoinTombe: 0, horsZone: 0 };
+                    equipesRelais.push(g);
+                }
+                g.membres.push(id);
+            }
+            equipesRelais = equipesRelais.filter(g => g.membres.length > 0);
+        }
+
+        function setEquipeEleve(index, numero) {
+            const s = students[index];
+            affecterEquipe(s.id, numero);
+            const g = equipesRelais.find(x => x.membres.includes(s.id));
+            if (g && g.membres.length > MAX_EQUIPE_RELAIS) {
+                showToast(`⚠️ ${g.nom} compte ${g.membres.length} élèves (max ${MAX_EQUIPE_RELAIS})`, true);
+            }
+            sauvegarderDonnees();
+            renderCurrentTab();
+        }
+
+        // Anciennes équipes (sans numéro) : numéro déduit du nom ou attribué à la suite
+        function numeroterEquipes() {
+            let n = 0;
+            equipesRelais = equipesRelais.filter(g => g.membres.length > 0);
+            equipesRelais.forEach(g => {
+                if (!g.numero) {
+                    const m = (g.nom || '').match(/(\d+)\s*$/);
+                    g.numero = m ? m[1] : '';
+                }
+            });
+            equipesRelais.forEach(g => {
+                if (!g.numero || equipesRelais.some(x => x !== g && x.numero === g.numero)) {
+                    do { n++; } while (equipesRelais.some(x => x.numero === String(n)));
+                    g.numero = String(n);
+                }
+                g.nom = 'Équipe ' + g.numero;
+            });
         }
 
         function updateEquipe(id, field, value) {
@@ -2184,9 +2230,12 @@
             const sansTemps = tries.filter(s => temps(s) === Infinity).length;
 
             retirerEleves('relais', new Set(eleves.map(s => s.id)));
+            // Numéros à la suite de ceux des équipes restantes (autres groupes)
+            const premier = equipesRelais.reduce((max, g) => Math.max(max, parseInt(g.numero) || 0), 0) + 1;
             const nouvelles = [];
             for (let n = 0; n < nbEquipes; n++) {
-                nouvelles.push({ id: newId('g'), nom: `${filtre ? filtre + ' - ' : ''}Équipe ${n + 1}`, membres: [], tempsRelais: '', temoinTombe: 0, horsZone: 0 });
+                const numero = String(premier + n);
+                nouvelles.push({ id: newId('g'), numero, nom: 'Équipe ' + numero, membres: [], tempsRelais: '', temoinTombe: 0, horsZone: 0 });
             }
             // Serpentin : 1→N puis N→1, etc. ; le surplus (< 4 élèves) reste non affecté
             tries.slice(0, nbEquipes * MAX_EQUIPE_RELAIS).forEach((s, i) => {
@@ -2601,6 +2650,7 @@
             if (confirm(`Supprimer ${student.prenom} ${student.nom} ?`)) {
                 students.splice(index, 1);
                 nettoyerGroupes();
+                numeroterEquipes();
                 sauvegarderDonnees();
                 showToast(`🗑️ Élève supprimé`);
                 renderCurrentTab();
@@ -2704,7 +2754,7 @@
                 if (student.nom || student.prenom) {
                     students.push(student);
                     affecterParNom(series800m, get(serieIdx), student.id, {});
-                    affecterParNom(equipesRelais, get(equipeIdx), student.id, { tempsRelais: '', temoinTombe: 0, horsZone: 0 });
+                    affecterEquipe(student.id, get(equipeIdx).replace(/^[^0-9]*?(\d+)\s*$/, '$1'));
                     count++;
                 }
             }
@@ -2814,7 +2864,7 @@
                 csv += `${s.nom};${s.prenom};${s.groupe};${s.sexe};`;
                 csv += `${serieDe[s.id] ? serieDe[s.id].nom : ''};`;
                 csv += `${fmt(s.note800m)};`;
-                csv += `${equipeDe[s.id] ? equipeDe[s.id].nom : ''};${s.temps60m || ''};`;
+                csv += `${equipeDe[s.id] ? equipeDe[s.id].numero : ''};${s.temps60m || ''};`;
                 csv += `${fmt(s.note60m)};${fmt(s.noteRelais)};${fmt(s.note4x60)};`;
                 if (EPREUVES_ACTIVES.haies) csv += `${fmt(s.noteHaies)};`;
                 csv += `${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'};`;
