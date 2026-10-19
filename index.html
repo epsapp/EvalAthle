@@ -2733,11 +2733,36 @@
             event.target.value = '';
         }
 
+        // Découpe une ligne CSV en respectant les cellules entre guillemets ("2'35""0")
+        function splitCSVLine(line, sep) {
+            const out = [];
+            let cur = '', quoted = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (quoted) {
+                    if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                    else if (ch === '"') quoted = false;
+                    else cur += ch;
+                } else if (ch === '"' && cur === '') quoted = true;
+                else if (sep ? ch === sep : /[;,\t]/.test(ch)) { out.push(cur); cur = ''; }
+                else cur += ch;
+            }
+            out.push(cur);
+            return out;
+        }
+
+        const sansAccents = v => (v || '').toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
         function parseCSVData(text) {
-            const lines = text.split('\n').filter(l => l.trim());
+            const lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) return 0;
 
-            const headers = lines[0].split(/[;,\t]/).map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            // Séparateur : « ; » ou tabulation si présents dans l'en-tête (les virgules restent alors des décimales)
+            const sep = lines[0].includes(';') ? ';' : (lines[0].includes('\t') ? '\t' : null);
+            const headers = splitCSVLine(lines[0], sep).map(sansAccents);
+            // Colonnes de l'export détaillé (« 800m - Temps final »…) reconnues en priorité
+            const ex = name => headers.indexOf(name);
+            const pick = (a, b) => a >= 0 ? a : b;
             // Version sans espaces/tirets/underscores pour la détection des colonnes performances
             const hn = headers.map(h => h.replace(/[\s_\-]/g, ''));
 
@@ -2747,28 +2772,31 @@
             const groupeIdx   = headers.findIndex(h => h.includes('groupe') || h.includes('class') || h.includes('grp'));
             const sexeIdx     = headers.findIndex(h => h.includes('sexe') || h.includes('genre') || h === 'sex');
             // Colonnes 800m
-            const p800mIdx    = hn.findIndex(h => h === 'projet800m' || (h.includes('projet') && h.includes('800')));
-            const t400mIdx    = hn.findIndex(h => h === 'temps400m'  || h === '400m' || (h.includes('400') && h.includes('temps')));
-            const t800mIdx    = hn.findIndex(h => h === 'temps800m'  || (h.includes('800') && h.includes('temps')));
+            const p800mIdx    = pick(ex('800m - projet'), hn.findIndex(h => h === 'projet800m' || (h.includes('projet') && h.includes('800'))));
+            const t400mIdx    = pick(ex('800m - temps passage (400m/300m)'), hn.findIndex(h => h === 'temps400m'  || h === '400m' || (h.includes('400') && h.includes('temps'))));
+            const t800mIdx    = pick(ex('800m - temps final'), hn.findIndex(h => h === 'temps800m'  || (h.includes('800') && h.includes('temps'))));
             // Colonnes haies
-            const pHaiesIdx   = hn.findIndex(h => h === 'projethaies' || (h.includes('projet') && h.includes('haies')));
-            const tHaiesIdx   = hn.findIndex(h => h === 'tempshaies'  || h === 'haies' || (h.includes('haies') && !h.includes('projet')));
-            const departIdx   = hn.findIndex(h => h === 'typedepart'  || h.includes('depart'));
+            const pHaiesIdx   = pick(ex('haies - projet'), hn.findIndex(h => h === 'projethaies' || (h.includes('projet') && h.includes('haies'))));
+            const tHaiesIdx   = pick(ex('haies - temps'), hn.findIndex(h => h === 'tempshaies'  || h === 'haies' || (h.includes('haies') && !h.includes('projet'))));
+            const departIdx   = pick(ex('haies - depart'), hn.findIndex(h => h === 'typedepart'  || h.includes('depart')));
             // Colonnes pentabond
-            const pPentaIdx   = hn.findIndex(h => h === 'projetpentabond' || (h.includes('projet') && h.includes('pentabond')));
-            const perfPentaIdx= hn.findIndex(h => h === 'perfpentabond'   || (h.includes('pentabond') && !h.includes('projet')));
-            const elanIdx     = hn.findIndex(h => h === 'elan');
-            const sautIdx     = hn.findIndex(h => h === 'premiersaut' || (h.includes('premier') && h.includes('saut')));
-            const equilibreIdx= hn.findIndex(h => h === 'equilibre');
+            const pPentaIdx   = pick(ex('pentabond - projet (m)'), hn.findIndex(h => h === 'projetpentabond' || (h.includes('projet') && h.includes('pentabond'))));
+            const perfPentaIdx= pick(ex('pentabond - perf (m)'), hn.findIndex(h => h === 'perfpentabond'   || (h.includes('pentabond') && !h.includes('projet'))));
+            const elanIdx     = pick(ex('pentabond - elan'), hn.findIndex(h => h === 'elan'));
+            const sautIdx     = pick(ex('pentabond - 1er saut'), hn.findIndex(h => h === 'premiersaut' || (h.includes('premier') && h.includes('saut'))));
+            const equilibreIdx= pick(ex('pentabond - equilibre'), hn.findIndex(h => h === 'equilibre'));
             // Colonnes 60m / relais / séries
-            const t60mIdx     = hn.findIndex(h => h === 'temps60m' || h === '60m' || (h.includes('60') && h.includes('temps') && !h.includes('relais')));
-            const equipeIdx   = hn.findIndex(h => h === 'equipe' || h === 'equiperelais');
-            const serieIdx    = hn.findIndex(h => h === 'serie' || h === 'serie800m');
+            const t60mIdx     = pick(ex('4x60m - temps 60m'), hn.findIndex(h => h === 'temps60m' || h === '60m' || (h.includes('60') && h.includes('temps') && !h.includes('relais'))));
+            const equipeIdx   = pick(ex('4x60m - n° equipe'), hn.findIndex(h => h === 'equipe' || h === 'equiperelais'));
+            const serieIdx    = pick(ex('800m - serie'), hn.findIndex(h => h === 'serie' || h === 'serie800m'));
+            const tRelaisIdx  = ex('4x60m - temps relais');
+            const temoinIdx   = ex('4x60m - temoin tombe');
+            const horsZoneIdx = ex('4x60m - hors zone');
 
             let count = 0;
 
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(/[;,\t]/).map(v => v.trim());
+                const values = splitCSVLine(lines[i], sep).map(v => v.trim());
                 if (values.length < 2) continue;
 
                 const get = idx => (idx >= 0 && idx < values.length) ? values[idx] : '';
@@ -2780,24 +2808,25 @@
                 sexe = sexe.charAt(0) === 'F' || sexe.includes('FEM') || sexe.includes('FILLE') ? 'F' : 'M';
 
                 // Normalisation typeDepart
-                let typeDepart = get(departIdx).toLowerCase().trim();
+                let typeDepart = sansAccents(get(departIdx));
                 if      (typeDepart === 'start'   || typeDepart.includes('bloc'))                       typeDepart = 'start';
                 else if (typeDepart === 'trepied' || typeDepart.includes('tre') || typeDepart === '3')  typeDepart = 'trepied';
                 else if (typeDepart === 'debout'  || typeDepart.includes('deb'))                        typeDepart = 'debout';
                 else typeDepart = '';
 
                 // Normalisation élan
-                let elan = get(elanIdx).trim();
+                // « 3/3 » ou « 3 sur 3 » (forme de l'export, que Excel ne prend pas pour une date)
+                let elan = get(elanIdx).trim().replace(/^(\d)\s*sur\s*(\d)$/i, '$1/$2');
                 if (!['3/3', '2/3', '1/3'].includes(elan)) elan = '';
 
                 // Normalisation premierSaut
-                let premierSaut = get(sautIdx).toLowerCase().trim();
+                let premierSaut = sansAccents(get(sautIdx));
                 if      (premierSaut.includes('clo')) premierSaut = 'cloche';
                 else if (premierSaut.includes('fou')) premierSaut = 'foulee';
                 else premierSaut = '';
 
                 // Normalisation equilibre
-                let equilibre = get(equilibreIdx).toLowerCase().trim();
+                let equilibre = sansAccents(get(equilibreIdx));
                 if      (equilibre.includes('opt')) equilibre = 'optimise';
                 else if (equilibre.includes('reg')) equilibre = 'regulier';
                 else if (equilibre.includes('per')) equilibre = 'perturbe';
@@ -2816,6 +2845,13 @@
                     students.push(student);
                     affecterParNom(series800m, get(serieIdx), student.id, {});
                     affecterEquipe(student.id, get(equipeIdx).replace(/^[^0-9]*?(\d+)\s*$/, '$1'));
+                    // Export détaillé : données de l'équipe (temps du relais, pénalités)
+                    const eq = equipesRelais.find(g => g.membres.includes(student.id));
+                    if (eq) {
+                        if (get(tRelaisIdx)) eq.tempsRelais = get(tRelaisIdx);
+                        if (get(temoinIdx)) eq.temoinTombe = parseInt(get(temoinIdx)) || 0;
+                        if (get(horsZoneIdx)) eq.horsZone = parseInt(get(horsZoneIdx)) || 0;
+                    }
                     count++;
                 }
             }
@@ -2905,6 +2941,107 @@
         }
 
         // ============ EXPORT FUNCTION ============
+        // Export détaillé : pour chaque épreuve, les données saisies (projet, temps de passage,
+        // temps final…), les écarts calculés et les points correspondants, puis la note.
+        const estDisp = v => !!v && v.toString().trim().toLowerCase() === 'disp';
+
+        // Nombre au format français (virgule) pour Excel
+        function csvNombre(n, decimales = 1) {
+            if (n === null || n === undefined || isNaN(n)) return '';
+            return n.toFixed(decimales).replace('.', ',');
+        }
+
+        // Temps en texte lisible par Excel sans conversion : 2'35"0 ou 7,72
+        function csvTemps(sec, centiemes = false) {
+            if (sec === null || sec === undefined || isNaN(sec)) return '';
+            if (centiemes) return sec.toFixed(2).replace('.', ',');
+            const tot = Math.round(sec * 10);
+            const m = Math.floor(tot / 600);
+            const s = Math.floor((tot % 600) / 10);
+            const d = tot % 10;
+            return `${m}'${String(s).padStart(2, '0')}"${d}`;
+        }
+
+        function csvCellule(v) {
+            const t = v === null || v === undefined ? '' : String(v);
+            return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+        }
+
+        function csvNote(note, disp) {
+            return disp ? 'DISP' : csvNombre(note);
+        }
+
+        function detail800m(s) {
+            const disp = estDisp(s.temps800m);
+            const t800 = disp ? null : parseTime(s.temps800m);
+            const tInter = parseTime(s.temps400m);
+            const projet = parseTime(s.projet800m);
+            const course600 = est600m(s);
+            const d = { disp, course: course600 ? '600m' : '800m', projet, tInter, tFinal: t800,
+                        t2e: null, ecartTours: null, ptsTours: null, ecartProjet: null, ptsProjet: null, ptsPerf: null, note: null };
+            if (t800 === null || isNaN(t800)) return d;
+            if (tInter !== null && !isNaN(tInter)) {
+                d.t2e = t800 - tInter;
+                if (d.t2e >= 0) {
+                    d.ecartTours = Math.abs(tInter - d.t2e);
+                    d.ptsTours = getNoteEcartTours(d.ecartTours, course600);
+                }
+            }
+            if (projet !== null && !isNaN(projet)) {
+                d.ecartProjet = Math.abs(t800 - projet);
+                d.ptsProjet = getNoteEcartProjet800m(d.ecartProjet);
+            }
+            d.ptsPerf = getNote800m(t800, s.sexe, course600);
+            d.note = d.ptsPerf + (d.ptsTours || 0) + (d.ptsProjet || 0);
+            return d;
+        }
+
+        const LIBELLES_DEPART = { start: 'Start', trepied: 'Trépied', debout: 'Debout' };
+
+        function detailHaies(s) {
+            const disp = estDisp(s.tempsHaies);
+            const temps = disp ? null : parseTime(s.tempsHaies);
+            const projet = parseTime(s.projetHaies);
+            const d = { disp, projet, temps, depart: LIBELLES_DEPART[s.typeDepart] || '',
+                        ptsDepart: s.typeDepart ? (POINTS_DEPART[s.typeDepart] || 0) : null,
+                        ecartProjet: null, ptsProjet: null, ptsPerf: null, note: null };
+            if (temps === null || isNaN(temps)) return d;
+            if (projet !== null && !isNaN(projet)) {
+                d.ecartProjet = Math.abs(temps - projet);
+                d.ptsProjet = getNoteEcartProjetHaies(d.ecartProjet);
+            }
+            d.ptsPerf = getNoteHaies(temps, s.sexe);
+            d.note = d.ptsPerf + (d.ptsDepart || 0) + (d.ptsProjet || 0);
+            return d;
+        }
+
+        const PENTA = {
+            elan: { '3/3': 3.5, '2/3': 1.5, '1/3': 0.5 },
+            saut: { 'cloche': 1, 'foulee': 0 },
+            equilibre: { 'optimise': 3, 'regulier': 2, 'perturbe': 1 },
+            libelles: { cloche: 'Cloche', foulee: 'Foulée', optimise: 'Optimisé', regulier: 'Régulier', perturbe: 'Perturbé' }
+        };
+
+        function detailPentabond(s) {
+            const disp = estDisp(s.perfPentabond);
+            const perf = disp ? NaN : parseFloat((s.perfPentabond || '').replace(',', '.'));
+            const projet = parseFloat((s.projetPentabond || '').replace(',', '.'));
+            const d = { disp, projet: isNaN(projet) ? null : projet, perf: isNaN(perf) ? null : perf,
+                        ecartCm: null, ptsProjet: null,
+                        elan: s.elan ? s.elan.replace('/', ' sur ') : '', ptsElan: s.elan ? (PENTA.elan[s.elan] || 0) : null,
+                        saut: PENTA.libelles[s.premierSaut] || '', ptsSaut: s.premierSaut ? (PENTA.saut[s.premierSaut] || 0) : null,
+                        equilibre: PENTA.libelles[s.equilibre] || '', ptsEquilibre: s.equilibre ? (PENTA.equilibre[s.equilibre] || 0) : null,
+                        ptsPerf: null, note: null };
+            if (d.perf === null) return d;
+            if (d.projet !== null) {
+                d.ecartCm = Math.abs(d.perf - d.projet) * 100;
+                d.ptsProjet = getNoteEcartPentabond(d.ecartCm);
+            }
+            d.ptsPerf = getNotePentabond(d.perf, s.sexe);
+            d.note = d.ptsPerf + (d.ptsElan || 0) + (d.ptsSaut || 0) + (d.ptsEquilibre || 0) + (d.ptsProjet || 0);
+            return d;
+        }
+
         function exportResults() {
             if (students.length === 0) {
                 showToast('⚠️ Aucun élève', true);
@@ -2913,26 +3050,57 @@
             
             renderResultats();
             const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
-            
             const serieDe = groupeParEleve(series800m);
             const equipeDe = groupeParEleve(equipesRelais);
-            const fmt = n => n !== null && n !== undefined ? n.toFixed(1) : 'DISP';
-            let csv = 'Nom;Prénom;Groupe;Sexe;Série 800m;Course;Note 800m/600m;Équipe;Temps 60m;Note 60m;Note relais;Note 4x60m;';
-            if (EPREUVES_ACTIVES.haies) csv += 'Note Haies;';
-            csv += 'Note Pentabond;Moyenne\n';
-            students.forEach(s => {
+            const infosEquipe = computeRelais();
+            const n = csvNombre, t = csvTemps;
+
+            const entetes = ['Nom', 'Prénom', 'Groupe', 'Sexe',
+                // 800m / 600m
+                '800m - Série', '800m - Course', '800m - Projet', '800m - Temps passage (400m/300m)', '800m - Temps final',
+                '800m - 2e partie', '800m - Écart passages (s)', '800m - Pts régularité', '800m - Écart projet (s)', '800m - Pts projet',
+                '800m - Pts perf', '800m - NOTE /20',
+                // 60m / relais
+                '4x60m - N° équipe', '4x60m - Temps 60m', '4x60m - Note 60m /10', '4x60m - Σ 60m équipe', '4x60m - Temps relais',
+                '4x60m - Écart (s)', '4x60m - Témoin tombé', '4x60m - Hors zone', '4x60m - Note relais /10', '4x60m - NOTE /20'];
+            if (EPREUVES_ACTIVES.haies) {
+                entetes.push('Haies - Projet', 'Haies - Temps', 'Haies - Départ', 'Haies - Pts départ', 'Haies - Écart projet (s)',
+                    'Haies - Pts projet', 'Haies - Pts perf', 'Haies - NOTE');
+            }
+            entetes.push('Pentabond - Projet (m)', 'Pentabond - Perf (m)', 'Pentabond - Écart projet (cm)', 'Pentabond - Pts projet',
+                'Pentabond - Élan', 'Pentabond - Pts élan', 'Pentabond - 1er saut', 'Pentabond - Pts 1er saut',
+                'Pentabond - Équilibre', 'Pentabond - Pts équilibre', 'Pentabond - Pts perf', 'Pentabond - NOTE',
+                'MOYENNE');
+
+            const lignes = students.map(s => {
+                const c = detail800m(s);
+                const equipe = equipeDe[s.id];
+                const r = equipe ? infosEquipe[equipe.id] : null;
+                const disp60 = estDisp(s.temps60m);
+                const p = detailPentabond(s);
                 const avg = calculateAverage(s, avgMode);
-                csv += `${s.nom};${s.prenom};${s.groupe};${s.sexe};`;
-                csv += `${serieDe[s.id] ? serieDe[s.id].nom : ''};${est600m(s) ? '600m' : '800m'};`;
-                csv += `${fmt(s.note800m)};`;
-                csv += `${equipeDe[s.id] ? equipeDe[s.id].numero : ''};${s.temps60m || ''};`;
-                csv += `${fmt(s.note60m)};${fmt(s.noteRelais)};${fmt(s.note4x60)};`;
-                if (EPREUVES_ACTIVES.haies) csv += `${fmt(s.noteHaies)};`;
-                csv += `${s.notePentabond !== null ? s.notePentabond.toFixed(1) : 'DISP'};`;
-                csv += `${avg !== null ? avg.toFixed(2) : ''}\n`;
+                const ligne = [s.nom, s.prenom, s.groupe, s.sexe,
+                    serieDe[s.id] ? serieDe[s.id].nom : '', c.course, t(c.projet), t(c.tInter), c.disp ? 'DISP' : t(c.tFinal),
+                    t(c.t2e), n(c.ecartTours), n(c.ptsTours), n(c.ecartProjet), n(c.ptsProjet),
+                    n(c.ptsPerf), csvNote(c.note, c.disp),
+                    equipe ? equipe.numero : '', disp60 ? 'DISP' : t(parseSprint(s.temps60m), true), csvNote(s.note60m, disp60),
+                    r ? t(r.somme, true) : '', r ? t(r.tempsRelais, true) : '', r ? n(r.ecart, 2) : '',
+                    equipe ? (parseInt(equipe.temoinTombe) || 0) : '', equipe ? (parseInt(equipe.horsZone) || 0) : '',
+                    n(s.noteRelais), csvNote(s.note4x60, disp60)];
+                if (EPREUVES_ACTIVES.haies) {
+                    const h = detailHaies(s);
+                    ligne.push(t(h.projet, true), h.disp ? 'DISP' : t(h.temps, true), h.depart, n(h.ptsDepart), n(h.ecartProjet, 2),
+                        n(h.ptsProjet), n(h.ptsPerf), csvNote(h.note, h.disp));
+                }
+                ligne.push(n(p.projet, 2), p.disp ? 'DISP' : n(p.perf, 2), n(p.ecartCm, 0), n(p.ptsProjet),
+                    p.elan, n(p.ptsElan), p.saut, n(p.ptsSaut),
+                    p.equilibre, n(p.ptsEquilibre), n(p.ptsPerf), csvNote(p.note, p.disp),
+                    n(avg, 2));
+                return ligne;
             });
-            
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+
+            const csv = [entetes, ...lignes].map(l => l.map(csvCellule).join(';')).join('\n') + '\n';
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -2940,7 +3108,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            showToast('📥 Export CSV réussi');
+            showToast('📥 Export CSV détaillé réussi');
         }
 
         // ============ EVENT LISTENERS ============
