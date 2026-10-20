@@ -1044,9 +1044,15 @@
                 <button class="btn btn-secondary" onclick="openModal('addStudentModal')" type="button">
                     ➕ Ajouter
                 </button>
-                <button class="btn btn-success" onclick="exportResults()" type="button">
-                    📥 Export
-                </button>
+                <div class="dropdown">
+                    <button class="btn btn-success" onclick="toggleDropdown('exportDropdown')" type="button">
+                        📥 Export ▾
+                    </button>
+                    <div class="dropdown-menu" id="exportDropdown" style="min-width: 280px;">
+                        <div class="dropdown-item" onclick="exportResults('notes')">📄 Notes uniquement</div>
+                        <div class="dropdown-item" onclick="exportResults('complet')">📋 Export complet (temps, écarts, points)</div>
+                    </div>
+                </div>
                 <button class="btn btn-danger" onclick="effacerToutesLesDonnees()" type="button">
                     🗑️ Effacer
                 </button>
@@ -1731,15 +1737,15 @@
         }
 
         // ============ UI FUNCTIONS ============
-        function toggleDropdown() {
-            document.getElementById('importDropdown').classList.toggle('active');
+        function toggleDropdown(id = 'importDropdown') {
+            document.querySelectorAll('.dropdown-menu').forEach(m => { if (m.id !== id) m.classList.remove('active'); });
+            document.getElementById(id).classList.toggle('active');
         }
 
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown')) {
-                const dropdown = document.getElementById('importDropdown');
-                if (dropdown) dropdown.classList.remove('active');
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
             }
         });
 
@@ -3042,13 +3048,30 @@
             return d;
         }
 
-        function exportResults() {
+        function telechargerCSV(lignes, nomFichier) {
+            const csv = lignes.map(l => l.map(csvCellule).join(';')).join('\n') + '\n';
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomFichier + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // type = 'notes' (export classique : une note par épreuve + moyenne) ou 'complet' (détaillé)
+        function exportResults(type = 'complet') {
+            document.getElementById('exportDropdown')?.classList.remove('active');
             if (students.length === 0) {
                 showToast('⚠️ Aucun élève', true);
                 return;
             }
             
             renderResultats();
+            if (type === 'notes') {
+                exportNotes();
+                return;
+            }
             const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
             const serieDe = groupeParEleve(series800m);
             const equipeDe = groupeParEleve(equipesRelais);
@@ -3099,16 +3122,25 @@
                 return ligne;
             });
 
-            const csv = [entetes, ...lignes].map(l => l.map(csvCellule).join(';')).join('\n') + '\n';
-            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'resultats_athletisme_' + new Date().toISOString().slice(0, 10) + '.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showToast('📥 Export CSV détaillé réussi');
+            telechargerCSV([entetes, ...lignes], 'resultats_athletisme_complet');
+            showToast('📥 Export complet réussi');
+        }
+
+        // Export classique : notes uniquement
+        function exportNotes() {
+            const avgMode = document.querySelector('input[name="avgMode"]:checked')?.value || '3';
+            const entetes = ['Nom', 'Prénom', 'Groupe', 'Sexe', option600mFilles ? 'Note 800m / 600m F' : 'Note 800m', 'Note 4x60m'];
+            if (EPREUVES_ACTIVES.haies) entetes.push('Note Haies');
+            entetes.push('Note Pentabond', 'Moyenne');
+            const lignes = students.map(s => {
+                const ligne = [s.nom, s.prenom, s.groupe, s.sexe,
+                    csvNote(s.note800m, estDisp(s.temps800m)), csvNote(s.note4x60, estDisp(s.temps60m))];
+                if (EPREUVES_ACTIVES.haies) ligne.push(csvNote(s.noteHaies, estDisp(s.tempsHaies)));
+                ligne.push(csvNote(s.notePentabond, estDisp(s.perfPentabond)), csvNombre(calculateAverage(s, avgMode), 2));
+                return ligne;
+            });
+            telechargerCSV([entetes, ...lignes], 'resultats_athletisme_notes');
+            showToast('📥 Export des notes réussi');
         }
 
         // ============ EVENT LISTENERS ============
@@ -3126,7 +3158,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-                document.getElementById('importDropdown')?.classList.remove('active');
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
             }
         });
 
