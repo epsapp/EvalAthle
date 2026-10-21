@@ -1,4 +1,4 @@
-const CACHE_NAME = 'athletisme-v7';
+const CACHE_NAME = 'athletisme-v8';
 const urlsToCache = [
   './',
   './index.html',
@@ -13,7 +13,7 @@ const urlsToCache = [
 
 // Installation
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installation v7...');
+  console.log('[Service Worker] Installation v8...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -32,7 +32,7 @@ self.addEventListener('install', (event) => {
 
 // Activation - supprime les anciens caches
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activation v7...');
+  console.log('[Service Worker] Activation v8...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
