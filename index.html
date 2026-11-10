@@ -1147,7 +1147,7 @@
                 <div class="card-header">
                     <h2 class="card-title">🏃‍♀️ 60m plat + Relais 4×60m (/20)</h2>
                     <div class="card-hint">
-                        Format: <kbd>7.72</kbd> <kbd>7"72</kbd> ou <kbd>disp</kbd> | 60m /10 + relais /10
+                        Format: <kbd>7.72</kbd> <kbd>7"72</kbd> ou <kbd>disp</kbd> | 60m /10 (+2 pts bonus, max 10) + relais /10
                     </div>
                 </div>
                 <div class="board-panel">
@@ -1504,6 +1504,8 @@
 
         // 60m plat (/10) : 10 − 0,5 par dixième entamé au-delà du temps de référence
         const TREF_60M = { M: 7.25, F: 8.05 };
+        // Bonus ajouté à tous sur la note du 60m (barème jugé trop difficile), note plafonnée à 10
+        const BONUS_60M = 2;
         // Relais 4x60m (/10) : note = (écart − 0"60) / 0"10, −2 pts par incident
         const RELAIS_ECART_MIN = 0.60;
         const RELAIS_PENALITE = 2;
@@ -1719,7 +1721,7 @@
             // Dixièmes entamés au-delà de Tref (arrondi au centième pour éviter les erreurs flottantes)
             const dixiemes = Math.round((timeInSeconds - tref) * 1000) / 100;
             const n = dixiemes > 0 ? Math.ceil(dixiemes) : 0;
-            return Math.max(0, 10 - 0.5 * n);
+            return Math.min(10, Math.max(0, 10 - 0.5 * n) + BONUS_60M);
         }
 
         function getNoteRelais(ecartSeconds, nbIncidents) {
