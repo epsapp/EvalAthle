@@ -1100,7 +1100,7 @@
                     <summary>🧩 Constitution des séries <span class="board-hint">(max 6 coureurs par série — glissez-déposez les élèves)</span></summary>
                     <div class="board-toolbar">
                         <label class="board-filter">Groupe :
-                            <select class="table-select" id="filter-800m" onchange="renderBoards()"></select>
+                            <select class="table-select" id="filter-800m" onchange="render800m()"></select>
                         </label>
                         <button class="btn btn-secondary" onclick="addGroupe('800m')" type="button">➕ Nouvelle série</button>
                         <button class="btn btn-primary" onclick="autoRepartir800m()" type="button">⚡ Répartir par projet</button>
@@ -1263,6 +1263,13 @@
                     <h2 class="card-title">🦘 Pentabond</h2>
                     <div class="card-hint">
                         Format: <kbd>12.75</kbd> ou <kbd>disp</kbd>
+                    </div>
+                </div>
+                <div class="board-panel">
+                    <div class="board-toolbar" style="margin: 0;">
+                        <label class="board-filter">Groupe :
+                            <select class="table-select" id="filter-pentabond" onchange="renderPentabond()"></select>
+                        </label>
                     </div>
                 </div>
                 <div class="table-container">
@@ -1868,11 +1875,13 @@
             students.forEach((s, i) => { if (!serieDe[s.id]) ordre.push(i); });
             
             let serieCourante;
+            const filtre = filtreGroupe('800m');
             tbody.innerHTML = ordre.map(i => {
                 const s = students[i];
                 const serie = serieDe[s.id];
+                const masque = filtre && s.groupe !== filtre;
                 let separateur = '';
-                if (series800m.length > 0 && serie !== serieCourante) {
+                if (!masque && series800m.length > 0 && serie !== serieCourante) {
                     serieCourante = serie;
                     separateur = `<tr class="serie-row"><td colspan="16">${serie ? '🏁 ' + escapeHtml(serie.nom) + ' (' + serie.membres.length + ')' : '⏳ Non affectés'}</td></tr>`;
                 }
@@ -1908,6 +1917,8 @@
                     students[i].note800m = null;
                 }
                 
+                // Filtre par groupe : note calculée pour tous, ligne masquée
+                if (masque) return '';
                 return separateur + `
                     <tr class="${isDisp ? 'disp-row' : ''}">
                         <td class="student-name">${escapeHtml(s.nom)}</td>
@@ -2489,6 +2500,9 @@
             empty.style.display = 'none';
             tbody.closest('.table-container').style.display = 'block';
             
+            renderFiltre('pentabond');
+            const filtre = filtreGroupe('pentabond');
+            
             tbody.innerHTML = students.map((s, i) => {
                 const isDisp = s.perfPentabond && s.perfPentabond.toLowerCase() === 'disp';
                 const perf = parseFloat((s.perfPentabond || '').replace(',', '.'));
@@ -2519,6 +2533,9 @@
                 } else {
                     students[i].notePentabond = null;
                 }
+                
+                // Filtre par groupe : la note est calculée pour tous, seule la ligne est masquée
+                if (filtre && s.groupe !== filtre) return '';
                 
                 return `
                     <tr class="${isDisp ? 'disp-row' : ''}">
